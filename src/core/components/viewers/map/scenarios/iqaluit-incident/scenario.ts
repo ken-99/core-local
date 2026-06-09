@@ -100,3 +100,54 @@ export function advectParcel(age: number, windBearing: number, windSpeed: number
   const weight = Math.max(0, 1 - age / MAX_PARCEL_AGE)
   return { position: [lng, lat], weight, distanceKm }
 }
+
+const PARCEL_COUNT = 28        // parcels emitted along the plume
+const PARCEL_EMIT_SPACING = 2  // age gap (time-units) between consecutive parcels
+
+const pointFC = (
+  features: { coord: Coord; props: Record<string, unknown> }[],
+): FeatureCollection<Point> => ({
+  type: 'FeatureCollection',
+  features: features.map(({ coord, props }) => ({
+    type: 'Feature',
+    properties: props,
+    geometry: { type: 'Point', coordinates: coord },
+  })),
+})
+
+/** Fire intensity in [0.6, 1.0], flickering deterministically with time. */
+export function flicker(t: number): number {
+  const base = 0.8
+  const amp = 0.2 * (0.6 * Math.sin(t * 9.0) + 0.4 * Math.sin(t * 23.0))
+  const v = base + amp
+  return v < 0.6 ? 0.6 : v > 1 ? 1 : v
+}
+
+/** Current position of every symbol at time `t`, tagged by kind. */
+export function symbolCollection(t: number): FeatureCollection<Point> {
+  return pointFC(SYMBOLS.map(s => ({
+    coord: interpAlong(s.path, (t * s.speed + s.offset) % 1),
+    props: { id: s.id, kind: s.kind },
+  })))
+}
+
+/** The drifting smoke plume as weighted points feeding the smoke heatmap. */
+export function smokeParcelCollection(
+  t: number, windBearing: number, windSpeed: number,
+): FeatureCollection<Point> {
+  const emitRate = 6 // age advanced per time-unit at the source
+  const features: { coord: Coord; props: Record<string, unknown> }[] = []
+  for (let i = 0; i < PARCEL_COUNT; i++) {
+    // each parcel's age = elapsed-since-emission; staggered by spacing, looping
+    const age = ((t * emitRate) - i * PARCEL_EMIT_SPACING + MAX_PARCEL_AGE * 100) % MAX_PARCEL_AGE
+    const p = advectParcel(age, windBearing, windSpeed)
+    if (p.weight <= 0) continue
+    features.push({ coord: p.position, props: { weight: p.weight } })
+  }
+  return pointFC(features)
+}
+
+/** Single weighted fire point at the warehouse (weight = flicker). */
+export function fireCollection(t: number): FeatureCollection<Point> {
+  return pointFC([{ coord: WAREHOUSE, props: { weight: flicker(t) } }])
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -57,5 +57,42 @@ describe('advectParcel', () => {
 
   it('higher wind speed pushes a parcel farther for the same age', () => {
     expect(advectParcel(20, 90, 35).distanceKm).toBeGreaterThan(advectParcel(20, 90, 10).distanceKm)
+  })
+})
+
+describe('flicker', () => {
+  it('stays within [0.6, 1.0] and varies over time', () => {
+    const samples = [0, 0.1, 0.25, 0.5, 1, 2, 3.3].map(flicker)
+    for (const v of samples) {
+      expect(v).toBeGreaterThanOrEqual(0.6)
+      expect(v).toBeLessThanOrEqual(1.0)
+    }
+    expect(new Set(samples).size).toBeGreaterThan(1) // it actually oscillates
+  })
+})
+
+describe('collections', () => {
+  it('symbolCollection yields one point per symbol path, tagged by kind', () => {
+    const fc = symbolCollection(0.3)
+    expect(fc.features).toHaveLength(7)
+    const kinds = new Set(fc.features.map(f => f.properties!.kind))
+    expect(kinds).toEqual(new Set(['aircraft', 'vessel']))
+  })
+
+  it('smokeParcelCollection produces weighted points that decline downwind', () => {
+    const fc = smokeParcelCollection(5, 90, 20)
+    expect(fc.features.length).toBeGreaterThan(5)
+    for (const f of fc.features) {
+      const w = f.properties!.weight as number
+      expect(w).toBeGreaterThanOrEqual(0)
+      expect(w).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('fireCollection is a single weighted point at the warehouse', () => {
+    const fc = fireCollection(0.5)
+    expect(fc.features).toHaveLength(1)
+    expect(fc.features[0].geometry.coordinates).toEqual(WAREHOUSE)
+    expect(fc.features[0].properties!.weight).toBeGreaterThan(0)
   })
 })
