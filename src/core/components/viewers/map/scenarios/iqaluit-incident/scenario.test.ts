@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -74,14 +74,14 @@ describe('flicker', () => {
 describe('collections', () => {
   it('symbolCollection yields one point per symbol path, tagged by kind', () => {
     const fc = symbolCollection(0.3)
-    expect(fc.features).toHaveLength(7)
+    expect(fc.features).toHaveLength(SYMBOLS.length)
     const kinds = new Set(fc.features.map(f => f.properties!.kind))
     expect(kinds).toEqual(new Set(['aircraft', 'vessel']))
   })
 
   it('smokeParcelCollection produces weighted points that decline downwind', () => {
     const fc = smokeParcelCollection(5, 90, 20)
-    expect(fc.features.length).toBeGreaterThan(5)
+    expect(fc.features.length).toBeGreaterThan(20)
     for (const f of fc.features) {
       const w = f.properties!.weight as number
       expect(w).toBeGreaterThanOrEqual(0)
