@@ -8,9 +8,10 @@ import {
 } from './scenario'
 // Real land/coastline edges for Iqaluit / Frobisher Bay, from OpenStreetMap
 // (© OpenStreetMap contributors, ODbL) — fetched once via Overpass, clipped to the
-// demo area + simplified, baked as a static fixture. Used as an on-map reference
-// (and ground truth for keeping vessels in water).
-import coastline from './iqaluitCoastline.json'
+// demo area + simplified, baked as a static TS module (bundles cleanly under tsup's
+// preserve-modules build; a .json import would not be copied to dist). Used as an
+// on-map reference and ground truth for keeping vessels in water.
+import { iqaluitCoastline as coastline } from './coastlineData'
 
 const OSM_ATTRIBUTION = '© OpenStreetMap contributors (ODbL)'
 
