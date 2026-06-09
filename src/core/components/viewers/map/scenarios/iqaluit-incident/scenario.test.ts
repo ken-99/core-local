@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -46,7 +46,13 @@ describe('advectParcel', () => {
 
   it('weight fades toward zero as a parcel ages', () => {
     expect(advectParcel(40, 90, 20).weight).toBeLessThan(advectParcel(5, 90, 20).weight)
-    expect(advectParcel(999, 90, 20).weight).toBe(0)
+    expect(advectParcel(MAX_PARCEL_AGE + 1, 90, 20).weight).toBe(0)
+  })
+
+  it('a negative-age (not-yet-emitted) parcel has zero weight at the warehouse', () => {
+    const p = advectParcel(-1, 90, 20)
+    expect(p.weight).toBe(0)
+    expect(p.position).toEqual(WAREHOUSE)
   })
 
   it('higher wind speed pushes a parcel farther for the same age', () => {

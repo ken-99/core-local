@@ -75,7 +75,7 @@ export function interpAlong(path: Coord[], u: number): Coord {
   return [ax + (bx - ax) * frac, ay + (by - ay) * frac]
 }
 
-const MAX_PARCEL_AGE = 60 // age (time-units) at which a parcel has fully dissipated
+export const MAX_PARCEL_AGE = 60 // age (time-units) at which a parcel has fully dissipated
 
 export interface Parcel {
   position: Coord
@@ -89,7 +89,8 @@ export interface Parcel {
  * knots. Lateral wander grows with age to read as billowing. Pure/deterministic.
  */
 export function advectParcel(age: number, windBearing: number, windSpeed: number): Parcel {
-  if (age <= 0) return { position: WAREHOUSE, weight: 0, distanceKm: 0 }
+  if (age < 0) return { position: WAREHOUSE, weight: 0, distanceKm: 0 }
+  // drift per time-unit: ~0.04 km buoyancy base + 0.004 km per knot of wind
   const distanceKm = (0.04 + windSpeed * 0.004) * age
   // deterministic lateral wobble (no RNG) — small bearing oscillation, growing with age
   const wobbleDeg = Math.sin(age * 0.6) * 6 * Math.min(1, age / 20)
