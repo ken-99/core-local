@@ -9,6 +9,17 @@ export type Lat = number
 export type Coord = [Lng, Lat]
 export type SymbolKind = 'aircraft' | 'vessel'
 
+const pointFC = (
+  features: { coord: Coord; props: Record<string, unknown> }[],
+): FeatureCollection<Point> => ({
+  type: 'FeatureCollection',
+  features: features.map(({ coord, props }) => ({
+    type: 'Feature',
+    properties: props,
+    geometry: { type: 'Point', coordinates: coord },
+  })),
+})
+
 // --- Geography (seed values; tuned in-browser). Iqaluit / Frobisher Bay. ---
 export const IQALUIT_CENTER: Coord = [-68.52, 63.75]
 export const WAREHOUSE: Coord = [-68.508, 63.742] // sealift dock on the waterfront
@@ -101,19 +112,11 @@ export function advectParcel(age: number, windBearing: number, windSpeed: number
   return { position: [lng, lat], weight, distanceKm }
 }
 
-const PARCEL_COUNT = 28        // parcels emitted along the plume
-const PARCEL_EMIT_SPACING = 2  // age gap (time-units) between consecutive parcels
-
-const pointFC = (
-  features: { coord: Coord; props: Record<string, unknown> }[],
-): FeatureCollection<Point> => ({
-  type: 'FeatureCollection',
-  features: features.map(({ coord, props }) => ({
-    type: 'Feature',
-    properties: props,
-    geometry: { type: 'Point', coordinates: coord },
-  })),
-})
+// Smoke-plume tuning. 28 of the 30 available slots (MAX_PARCEL_AGE / spacing)
+// are emitted, leaving a short gap at the source for visual breathing room.
+const PARCEL_COUNT = 28          // parcels emitted along the plume
+const PARCEL_EMIT_SPACING = 2    // age gap (time-units) between consecutive parcels
+const PARCEL_EMIT_RATE = 6       // age advanced per time-unit at the source
 
 /** Fire intensity in [0.6, 1.0], flickering deterministically with time. */
 export function flicker(t: number): number {
@@ -135,12 +138,13 @@ export function symbolCollection(t: number): FeatureCollection<Point> {
 export function smokeParcelCollection(
   t: number, windBearing: number, windSpeed: number,
 ): FeatureCollection<Point> {
-  const emitRate = 6 // age advanced per time-unit at the source
   const features: { coord: Coord; props: Record<string, unknown> }[] = []
   for (let i = 0; i < PARCEL_COUNT; i++) {
     // each parcel's age = elapsed-since-emission; staggered by spacing, looping
-    const age = ((t * emitRate) - i * PARCEL_EMIT_SPACING + MAX_PARCEL_AGE * 100) % MAX_PARCEL_AGE
+    const age = ((t * PARCEL_EMIT_RATE) - i * PARCEL_EMIT_SPACING + MAX_PARCEL_AGE * 100) % MAX_PARCEL_AGE
     const p = advectParcel(age, windBearing, windSpeed)
+    // defensive: drop fully-dissipated parcels. The age formula keeps age in
+    // [0, MAX_PARCEL_AGE) so this rarely fires, but it guards future tuning.
     if (p.weight <= 0) continue
     features.push({ coord: p.position, props: { weight: p.weight } })
   }
