@@ -55,24 +55,28 @@ export interface SymbolPath {
   offset: number // phase offset in [0,1)
 }
 
-// Aircraft cruise ~4-5x faster than vessels (relative realism).
+// Aircraft cruise ~4x faster than vessels. Each aircraft has a DISTINCT long
+// corridor — only air-1 overflies the runway — so they don't pile up over YFB.
+// Vessels run long bay transits kept SE / offshore (lat ≤ ~63.732 = open water).
 export const SYMBOLS: SymbolPath[] = [
-  // Aircraft: SE approach corridor → runway → departures around YFB.
-  { id: 'air-1', kind: 'aircraft', speed: 0.34, offset: 0.0,
-    path: [[-68.495, 63.730], [-68.525, 63.745], [-68.5558, 63.7567], [-68.563, 63.764]] },
-  { id: 'air-2', kind: 'aircraft', speed: 0.30, offset: 0.45,
-    path: [[-68.5558, 63.7567], [-68.567, 63.763], [-68.580, 63.772]] },
-  { id: 'air-3', kind: 'aircraft', speed: 0.38, offset: 0.7,
-    path: [[-68.540, 63.768], [-68.5558, 63.7567], [-68.566, 63.749]] },
-  // Vessels: inbound/outbound the sealift dock + bay transits (all in water, SE).
-  { id: 'sea-1', kind: 'vessel', speed: 0.085, offset: 0.0,
-    path: [[-68.430, 63.705], [-68.465, 63.720], [-68.495, 63.734], [-68.508, 63.741]] },
-  { id: 'sea-2', kind: 'vessel', speed: 0.07, offset: 0.3,
-    path: [[-68.410, 63.690], [-68.450, 63.705], [-68.488, 63.718]] },
-  { id: 'sea-3', kind: 'vessel', speed: 0.075, offset: 0.6,
-    path: [[-68.508, 63.741], [-68.470, 63.722], [-68.430, 63.704]] },
-  { id: 'sea-4', kind: 'vessel', speed: 0.08, offset: 0.15,
-    path: [[-68.390, 63.695], [-68.430, 63.700], [-68.470, 63.712]] },
+  // air-1: long straight-in approach from the SE → touchdown → rollout NNW (the runway user).
+  { id: 'air-1', kind: 'aircraft', speed: 0.60, offset: 0.0,
+    path: [[-68.420, 63.668], [-68.495, 63.715], [-68.540, 63.742], [-68.557, 63.752], [-68.555, 63.763], [-68.550, 63.773]] },
+  // air-2: departure climbing out far to the NW — its own corridor, never over the runway.
+  { id: 'air-2', kind: 'aircraft', speed: 0.55, offset: 0.5,
+    path: [[-68.575, 63.760], [-68.615, 63.778], [-68.660, 63.800], [-68.710, 63.824]] },
+  // air-3: low W→E transit SOUTH of the field, over the inlet — clear of the runway.
+  { id: 'air-3', kind: 'aircraft', speed: 0.58, offset: 0.25,
+    path: [[-68.585, 63.700], [-68.520, 63.718], [-68.450, 63.734], [-68.380, 63.750]] },
+  // Vessels: long bay transits, kept SE / offshore (no land).
+  { id: 'sea-1', kind: 'vessel', speed: 0.14, offset: 0.0,
+    path: [[-68.330, 63.645], [-68.400, 63.682], [-68.460, 63.712], [-68.505, 63.732]] },
+  { id: 'sea-2', kind: 'vessel', speed: 0.12, offset: 0.35,
+    path: [[-68.290, 63.668], [-68.360, 63.692], [-68.430, 63.714], [-68.495, 63.728]] },
+  { id: 'sea-3', kind: 'vessel', speed: 0.13, offset: 0.6,
+    path: [[-68.500, 63.730], [-68.445, 63.706], [-68.385, 63.676], [-68.325, 63.648]] },
+  { id: 'sea-4', kind: 'vessel', speed: 0.135, offset: 0.15,
+    path: [[-68.275, 63.638], [-68.345, 63.660], [-68.415, 63.686], [-68.480, 63.712]] },
 ]
 
 const clamp01 = (u: number): number => (u < 0 ? 0 : u > 1 ? 1 : u)
