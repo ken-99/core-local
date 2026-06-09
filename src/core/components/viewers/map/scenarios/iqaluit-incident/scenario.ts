@@ -2,7 +2,7 @@
 // No React, no MapLibre — everything here is deterministic from its inputs so
 // it can be unit-tested and so the layer can recompute cheaply each frame.
 import type { FeatureCollection, Point, Polygon } from 'geojson'
-import { destination } from '@turf/turf'
+import { destination, distance, bearing as turfBearing } from '@turf/turf'
 
 export type Lng = number
 export type Lat = number
@@ -43,31 +43,36 @@ export const WAREHOUSE_FOOTPRINT: FeatureCollection<Polygon> = {
   }],
 }
 
-// --- Symbol paths. Aircraft near YFB (~[-68.556, 63.756]); vessels in the bay
-// (SE of town: higher lng / lower lat). `speed` = path loops per time-unit. ---
+// --- Symbol paths. Aircraft around YFB (~[-68.556, 63.756]) + its SE approach;
+// vessels in Koojesse Inlet / Frobisher Bay (SE of town: less-negative lng + lower
+// lat = open water). `speed` is GROUND velocity in km per time-unit, so plane vs
+// boat pace is physically comparable regardless of path length. ---
 export interface SymbolPath {
   id: string
   kind: SymbolKind
   path: Coord[]
-  speed: number
+  speed: number  // ground velocity, km per time-unit
   offset: number // phase offset in [0,1)
 }
 
+// Aircraft cruise ~4-5x faster than vessels (relative realism).
 export const SYMBOLS: SymbolPath[] = [
-  { id: 'air-1', kind: 'aircraft', speed: 0.55, offset: 0.0,
-    path: [[-68.62, 63.80], [-68.58, 63.77], [-68.556, 63.756], [-68.50, 63.752]] },
-  { id: 'air-2', kind: 'aircraft', speed: 0.32, offset: 0.4,
-    path: [[-68.556, 63.756], [-68.57, 63.74], [-68.59, 63.725]] },
-  { id: 'air-3', kind: 'aircraft', speed: 0.40, offset: 0.7,
-    path: [[-68.49, 63.79], [-68.52, 63.77], [-68.556, 63.756]] },
-  { id: 'sea-1', kind: 'vessel', speed: 0.28, offset: 0.0,
-    path: [[-68.40, 63.69], [-68.45, 63.71], [-68.49, 63.735], [-68.506, 63.741]] },
-  { id: 'sea-2', kind: 'vessel', speed: 0.22, offset: 0.3,
-    path: [[-68.36, 63.66], [-68.42, 63.69], [-68.47, 63.715]] },
-  { id: 'sea-3', kind: 'vessel', speed: 0.18, offset: 0.6,
-    path: [[-68.506, 63.741], [-68.46, 63.72], [-68.40, 63.70]] },
-  { id: 'sea-4', kind: 'vessel', speed: 0.20, offset: 0.15,
-    path: [[-68.34, 63.71], [-68.40, 63.70], [-68.46, 63.71]] },
+  // Aircraft: SE approach corridor → runway → departures around YFB.
+  { id: 'air-1', kind: 'aircraft', speed: 0.34, offset: 0.0,
+    path: [[-68.495, 63.730], [-68.525, 63.745], [-68.5558, 63.7567], [-68.563, 63.764]] },
+  { id: 'air-2', kind: 'aircraft', speed: 0.30, offset: 0.45,
+    path: [[-68.5558, 63.7567], [-68.567, 63.763], [-68.580, 63.772]] },
+  { id: 'air-3', kind: 'aircraft', speed: 0.38, offset: 0.7,
+    path: [[-68.540, 63.768], [-68.5558, 63.7567], [-68.566, 63.749]] },
+  // Vessels: inbound/outbound the sealift dock + bay transits (all in water, SE).
+  { id: 'sea-1', kind: 'vessel', speed: 0.085, offset: 0.0,
+    path: [[-68.430, 63.705], [-68.465, 63.720], [-68.495, 63.734], [-68.508, 63.741]] },
+  { id: 'sea-2', kind: 'vessel', speed: 0.07, offset: 0.3,
+    path: [[-68.410, 63.690], [-68.450, 63.705], [-68.488, 63.718]] },
+  { id: 'sea-3', kind: 'vessel', speed: 0.075, offset: 0.6,
+    path: [[-68.508, 63.741], [-68.470, 63.722], [-68.430, 63.704]] },
+  { id: 'sea-4', kind: 'vessel', speed: 0.08, offset: 0.15,
+    path: [[-68.390, 63.695], [-68.430, 63.700], [-68.470, 63.712]] },
 ]
 
 const clamp01 = (u: number): number => (u < 0 ? 0 : u > 1 ? 1 : u)
@@ -85,6 +90,25 @@ export function interpAlong(path: Coord[], u: number): Coord {
   const [bx, by] = path[i + 1]
   return [ax + (bx - ax) * frac, ay + (by - ay) * frac]
 }
+
+/** Total ground length of a polyline in km (sum of great-circle segments). */
+export function pathLengthKm(path: Coord[]): number {
+  let total = 0
+  for (let i = 1; i < path.length; i++) {
+    total += distance(path[i - 1], path[i], { units: 'kilometers' })
+  }
+  return total
+}
+
+/** Compass bearing (deg, 0=N, clockwise) a→b; 0 for a zero-length step. */
+export function bearingDeg(a: Coord, b: Coord): number {
+  if (a[0] === b[0] && a[1] === b[1]) return 0
+  return (turfBearing(a, b) + 360) % 360
+}
+
+// Precomputed path lengths (paths are static) so symbol velocity stays in ground
+// units (km/time-unit) and plane-vs-boat speeds are physically comparable.
+const PATH_LENGTHS: number[] = SYMBOLS.map(s => pathLengthKm(s.path))
 
 export const MAX_PARCEL_AGE = 60 // age (time-units) at which a parcel has fully dissipated
 
@@ -126,12 +150,16 @@ export function flicker(t: number): number {
   return v < 0.6 ? 0.6 : v > 1 ? 1 : v
 }
 
-/** Current position of every symbol at time `t`, tagged by kind. */
+/** Current position + travel heading of every symbol at time `t`. */
 export function symbolCollection(t: number): FeatureCollection<Point> {
-  return pointFC(SYMBOLS.map(s => ({
-    coord: interpAlong(s.path, (t * s.speed + s.offset) % 1),
-    props: { id: s.id, kind: s.kind },
-  })))
+  return pointFC(SYMBOLS.map((s, i) => {
+    const len = PATH_LENGTHS[i] || 1
+    const u = ((t * s.speed) / len + s.offset) % 1
+    const pos = interpAlong(s.path, u)
+    const back = interpAlong(s.path, Math.max(0, u - 0.01))
+    const fwd = interpAlong(s.path, Math.min(1, u + 0.01))
+    return { coord: pos, props: { id: s.id, kind: s.kind, heading: bearingDeg(back, fwd) } }
+  }))
 }
 
 /** The drifting smoke plume as weighted points feeding the smoke heatmap. */

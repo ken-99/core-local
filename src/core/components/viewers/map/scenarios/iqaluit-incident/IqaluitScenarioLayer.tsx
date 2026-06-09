@@ -29,6 +29,44 @@ function makeWindArrowEl(): HTMLDivElement {
   return el
 }
 
+// --- Symbol icons. Drawn nose/bow UP (north) so MapLibre `icon-rotate` =
+// compass heading aims them along travel. Kind colour + white outline keeps them
+// legible on satellite imagery and consistent with the legend. ---
+const ICON = { plane: 'iqaluit-plane', boat: 'iqaluit-boat' }
+const ICON_PX = 64 // drawn @ pixelRatio 2 → ~32px before icon-size
+
+function drawPlane(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = '#1f6f4a'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(0, -24)            // nose
+  ctx.lineTo(4, -7); ctx.lineTo(24, 4); ctx.lineTo(24, 9); ctx.lineTo(4, 5)   // right wing
+  ctx.lineTo(3, 17); ctx.lineTo(12, 24); ctx.lineTo(12, 27); ctx.lineTo(0, 22) // right tailplane
+  ctx.lineTo(-12, 27); ctx.lineTo(-12, 24); ctx.lineTo(-3, 17)                 // left tailplane
+  ctx.lineTo(-4, 5); ctx.lineTo(-24, 9); ctx.lineTo(-24, 4); ctx.lineTo(-4, -7) // left wing
+  ctx.closePath(); ctx.fill(); ctx.stroke()
+}
+
+function drawBoat(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = '#1d4ed8'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(0, -24)                     // bow
+  ctx.quadraticCurveTo(13, -4, 11, 18)   // right side → stern
+  ctx.lineTo(-11, 18)
+  ctx.quadraticCurveTo(-13, -4, 0, -24)  // left side → bow
+  ctx.closePath(); ctx.fill(); ctx.stroke()
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(-6, -6, 12, 12) // cabin
+}
+
+function makeIconData(kind: 'plane' | 'boat'): ImageData {
+  const c = document.createElement('canvas')
+  c.width = ICON_PX; c.height = ICON_PX
+  const ctx = c.getContext('2d')!
+  ctx.translate(ICON_PX / 2, ICON_PX / 2)
+  if (kind === 'plane') drawPlane(ctx)
+  else drawBoat(ctx)
+  return ctx.getImageData(0, 0, ICON_PX, ICON_PX)
+}
+
 export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed }) => {
   const markerRef = React.useRef<Marker | null>(null)
 
@@ -42,6 +80,9 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     addSrc(IDS.smokeSrc, EMPTY)
     addSrc(IDS.fireSrc, EMPTY)
     addSrc(IDS.symSrc, EMPTY)
+
+    if (!map.hasImage(ICON.plane)) map.addImage(ICON.plane, makeIconData('plane'), { pixelRatio: 2 })
+    if (!map.hasImage(ICON.boat)) map.addImage(ICON.boat, makeIconData('boat'), { pixelRatio: 2 })
 
     if (!map.getLayer(IDS.warehouseLayer)) {
       map.addLayer({
@@ -84,12 +125,14 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     }
     if (!map.getLayer(IDS.symLayer)) {
       map.addLayer({
-        id: IDS.symLayer, type: 'circle', source: IDS.symSrc,
-        paint: {
-          'circle-radius': 5,
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#ffffff',
-          'circle-color': ['match', ['get', 'kind'], 'aircraft', '#1f6f4a', 'vessel', '#1d4ed8', '#888888'],
+        id: IDS.symLayer, type: 'symbol', source: IDS.symSrc,
+        layout: {
+          'icon-image': ['match', ['get', 'kind'], 'aircraft', ICON.plane, 'vessel', ICON.boat, ICON.boat],
+          'icon-size': 0.7,
+          'icon-rotate': ['get', 'heading'],
+          'icon-rotation-alignment': 'map',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       } as maplibregl.LayerSpecification)
     }
@@ -102,6 +145,9 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
       }
       for (const id of [IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
         if (map.getSource(id)) map.removeSource(id)
+      }
+      for (const id of [ICON.plane, ICON.boat]) {
+        if (map.hasImage(id)) map.removeImage(id)
       }
       markerRef.current?.remove()
       markerRef.current = null
