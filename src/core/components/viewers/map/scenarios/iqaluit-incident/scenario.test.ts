@@ -13,7 +13,12 @@ describe('interpAlong', () => {
     expect(interpAlong(PATH, 1)).toEqual([-68.50, 63.77])
   })
 
+  it('returns the sole point for a single-element path', () => {
+    expect(interpAlong([[-68.52, 63.75]], 0.5)).toEqual([-68.52, 63.75])
+  })
+
   it('returns a point strictly between the ends at u=0.5', () => {
+    expect(interpAlong(PATH, 0.5)).toEqual([-68.54, 63.76])
     const [lng, lat] = interpAlong(PATH, 0.5)
     expect(lng).toBeGreaterThan(-68.56)
     expect(lng).toBeLessThan(-68.50)

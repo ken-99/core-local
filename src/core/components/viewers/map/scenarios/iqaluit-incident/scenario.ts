@@ -63,6 +63,7 @@ const clamp01 = (u: number): number => (u < 0 ? 0 : u > 1 ? 1 : u)
 
 /** Linear interpolation along a polyline at progress `u` in [0,1] (clamped). */
 export function interpAlong(path: Coord[], u: number): Coord {
+  if (path.length === 0) throw new Error('interpAlong: path must not be empty')
   if (path.length === 1) return path[0]
   const cu = clamp01(u)
   const segs = path.length - 1
