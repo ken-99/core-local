@@ -6,6 +6,13 @@ import {
   WAREHOUSE, WAREHOUSE_FOOTPRINT,
   symbolCollection, smokeParcelCollection, fireCollection,
 } from './scenario'
+// Real land/coastline edges for Iqaluit / Frobisher Bay, from OpenStreetMap
+// (© OpenStreetMap contributors, ODbL) — fetched once via Overpass, clipped to the
+// demo area + simplified, baked as a static fixture. Used as an on-map reference
+// (and ground truth for keeping vessels in water).
+import coastline from './iqaluitCoastline.json'
+
+const OSM_ATTRIBUTION = '© OpenStreetMap contributors (ODbL)'
 
 interface Props {
   map: maplibregl.Map
@@ -15,6 +22,7 @@ interface Props {
 }
 
 const IDS = {
+  coastSrc: 'iqaluit-coast-src', coastLayer: 'iqaluit-coast',
   warehouseSrc: 'iqaluit-warehouse-src', warehouseLayer: 'iqaluit-warehouse',
   smokeSrc: 'iqaluit-smoke-src', smokeLayer: 'iqaluit-smoke',
   fireSrc: 'iqaluit-fire-src', fireLayer: 'iqaluit-fire',
@@ -76,6 +84,9 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     const addSrc = (id: string, data: GeoJSON.GeoJSON) => {
       if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data })
     }
+    if (!map.getSource(IDS.coastSrc)) {
+      map.addSource(IDS.coastSrc, { type: 'geojson', data: coastline as GeoJSON.GeoJSON, attribution: OSM_ATTRIBUTION })
+    }
     addSrc(IDS.warehouseSrc, WAREHOUSE_FOOTPRINT)
     addSrc(IDS.smokeSrc, EMPTY)
     addSrc(IDS.fireSrc, EMPTY)
@@ -84,6 +95,12 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     if (!map.hasImage(ICON.plane)) map.addImage(ICON.plane, makeIconData('plane'), { pixelRatio: 2 })
     if (!map.hasImage(ICON.boat)) map.addImage(ICON.boat, makeIconData('boat'), { pixelRatio: 2 })
 
+    if (!map.getLayer(IDS.coastLayer)) {
+      map.addLayer({
+        id: IDS.coastLayer, type: 'line', source: IDS.coastSrc,
+        paint: { 'line-color': '#7dd3fc', 'line-width': 1.2, 'line-opacity': 0.6 },
+      })
+    }
     if (!map.getLayer(IDS.warehouseLayer)) {
       map.addLayer({
         id: IDS.warehouseLayer, type: 'fill', source: IDS.warehouseSrc,
@@ -140,10 +157,10 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(WAREHOUSE).addTo(map)
 
     return () => {
-      for (const id of [IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
+      for (const id of [IDS.coastLayer, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
         if (map.getLayer(id)) map.removeLayer(id)
       }
-      for (const id of [IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
+      for (const id of [IDS.coastSrc, IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
         if (map.getSource(id)) map.removeSource(id)
       }
       for (const id of [ICON.plane, ICON.boat]) {
