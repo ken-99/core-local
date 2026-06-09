@@ -8,12 +8,15 @@ import * as React from 'react'
  * downstream — never setStyle/setProjection — so we stay clear of MapLibre's
  * render-loop re-entrancy hazard.
  */
-export function useScenarioClock(playing: boolean): { t: number; reset: () => void } {
+export function useScenarioClock(playing: boolean, speed = 1): { t: number; reset: () => void } {
   const [t, setT] = React.useState(0)
   const tRef = React.useRef(0)
   const lastTs = React.useRef<number | null>(null)
   const lastEmit = React.useRef(0)
   const rafId = React.useRef<number | null>(null)
+  // playback-speed multiplier, read via ref so changing it doesn't restart the rAF loop
+  const speedRef = React.useRef(speed)
+  speedRef.current = speed
 
   React.useEffect(() => {
     const tick = (ts: number) => {
@@ -21,7 +24,7 @@ export function useScenarioClock(playing: boolean): { t: number; reset: () => vo
       const dt = (ts - lastTs.current) / 1000
       lastTs.current = ts
       if (playing) {
-        tRef.current += dt
+        tRef.current += dt * speedRef.current
         if (ts - lastEmit.current >= 100) { // ~10 fps
           lastEmit.current = ts
           setT(tRef.current)

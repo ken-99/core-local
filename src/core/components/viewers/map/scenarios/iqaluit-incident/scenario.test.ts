@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS, bearingDeg, pathLengthKm } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -72,11 +72,16 @@ describe('flicker', () => {
 })
 
 describe('collections', () => {
-  it('symbolCollection yields one point per symbol path, tagged by kind', () => {
+  it('symbolCollection yields one point per symbol path, tagged by kind + heading', () => {
     const fc = symbolCollection(0.3)
     expect(fc.features).toHaveLength(SYMBOLS.length)
     const kinds = new Set(fc.features.map(f => f.properties!.kind))
     expect(kinds).toEqual(new Set(['aircraft', 'vessel']))
+    for (const f of fc.features) {
+      const h = f.properties!.heading as number
+      expect(h).toBeGreaterThanOrEqual(0)
+      expect(h).toBeLessThan(360)
+    }
   })
 
   it('smokeParcelCollection produces weighted points that decline downwind', () => {
@@ -94,5 +99,23 @@ describe('collections', () => {
     expect(fc.features).toHaveLength(1)
     expect(fc.features[0].geometry.coordinates).toEqual(WAREHOUSE)
     expect(fc.features[0].properties!.weight).toBeGreaterThan(0)
+  })
+})
+
+describe('bearingDeg', () => {
+  it('is ~90 for due east and ~0 for due north', () => {
+    expect(bearingDeg([-68.5, 63.75], [-68.4, 63.75])).toBeCloseTo(90, 0)
+    expect(bearingDeg([-68.5, 63.70], [-68.5, 63.80])).toBeCloseTo(0, 0)
+  })
+
+  it('returns 0 for a zero-length step', () => {
+    expect(bearingDeg([-68.5, 63.75], [-68.5, 63.75])).toBe(0)
+  })
+})
+
+describe('pathLengthKm', () => {
+  it('sums segment distances (≈11.1 km for two 0.05° lat segments)', () => {
+    const len = pathLengthKm([[-68.5, 63.70], [-68.5, 63.75], [-68.5, 63.80]])
+    expect(len).toBeCloseTo(11.1, 0)
   })
 })

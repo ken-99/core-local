@@ -15,9 +15,10 @@ interface Props { map: maplibregl.Map }
  */
 export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
   const [playing, setPlaying] = React.useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = React.useState(1)
   const [windBearing, setWindBearing] = React.useState(120)
   const [windSpeed, setWindSpeed] = React.useState(18)
-  const { t, reset } = useScenarioClock(playing)
+  const { t, reset } = useScenarioClock(playing, playbackSpeed)
 
   return (
     <>
@@ -25,6 +26,8 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
         playing={playing}
         onPlayToggle={() => setPlaying(p => !p)}
         onRestart={() => { reset(); }}
+        playbackSpeed={playbackSpeed}
+        onPlaybackSpeedChange={setPlaybackSpeed}
         windBearing={windBearing}
         windSpeed={windSpeed}
         onWindBearingChange={setWindBearing}

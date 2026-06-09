@@ -5,6 +5,8 @@ interface ScenarioControlProps {
   playing: boolean
   onPlayToggle: () => void
   onRestart: () => void
+  playbackSpeed: number            // clock multiplier (0.5×–4×)
+  onPlaybackSpeedChange: (x: number) => void
   windBearing: number              // deg, 0=N, the way smoke drifts TOWARD
   windSpeed: number                // knots
   onWindBearingChange: (deg: number) => void
@@ -12,12 +14,13 @@ interface ScenarioControlProps {
 }
 
 const TEAL = '#0d9488'
+const PLAYBACK_SPEEDS = [0.5, 1, 2, 4]
 const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 const cardinal = (b: number): string => CARDINALS[Math.round((b % 360) / 45) % 8]
 
 export const ScenarioControl: React.FC<ScenarioControlProps> = ({
-  playing, onPlayToggle, onRestart, windBearing, windSpeed,
-  onWindBearingChange, onWindSpeedChange,
+  playing, onPlayToggle, onRestart, playbackSpeed, onPlaybackSpeedChange,
+  windBearing, windSpeed, onWindBearingChange, onWindSpeedChange,
 }) => {
   const dialRef = React.useRef<SVGSVGElement>(null)
   const dragging = React.useRef(false)
@@ -61,6 +64,21 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
           style={{ height: 30, padding: '0 12px', border: 'none', borderRadius: 6, background: '#e2e8f0', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
           ⟲ Restart
         </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 11, fontSize: 12, color: '#64748b' }}>
+        <span>Playback</span>
+        {PLAYBACK_SPEEDS.map(s => (
+          <button key={s} type="button" onClick={() => onPlaybackSpeedChange(s)}
+            style={{
+              height: 24, padding: '0 8px', borderRadius: 5, cursor: 'pointer', fontWeight: 600,
+              border: `1px solid ${playbackSpeed === s ? TEAL : '#cbd5e1'}`,
+              background: playbackSpeed === s ? TEAL : '#fff',
+              color: playbackSpeed === s ? '#fff' : '#334155',
+            }}>
+            {s}×
+          </button>
+        ))}
       </div>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
