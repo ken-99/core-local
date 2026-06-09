@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -29,5 +29,27 @@ describe('interpAlong', () => {
   it('clamps u outside [0,1]', () => {
     expect(interpAlong(PATH, -1)).toEqual([-68.56, 63.75])
     expect(interpAlong(PATH, 2)).toEqual([-68.50, 63.77])
+  })
+})
+
+describe('advectParcel', () => {
+  it('drifts downwind: bearing 90° (east) increases longitude', () => {
+    const { position } = advectParcel(20, 90, 20)
+    expect(position[0]).toBeGreaterThan(WAREHOUSE[0]) // east of the warehouse
+  })
+
+  it('older parcels travel farther from the warehouse', () => {
+    const near = advectParcel(5, 90, 20).distanceKm
+    const far = advectParcel(40, 90, 20).distanceKm
+    expect(far).toBeGreaterThan(near)
+  })
+
+  it('weight fades toward zero as a parcel ages', () => {
+    expect(advectParcel(40, 90, 20).weight).toBeLessThan(advectParcel(5, 90, 20).weight)
+    expect(advectParcel(999, 90, 20).weight).toBe(0)
+  })
+
+  it('higher wind speed pushes a parcel farther for the same age', () => {
+    expect(advectParcel(20, 90, 35).distanceKm).toBeGreaterThan(advectParcel(20, 90, 10).distanceKm)
   })
 })
