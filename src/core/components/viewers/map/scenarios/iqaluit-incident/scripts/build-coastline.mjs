@@ -9,7 +9,7 @@
 import { writeFileSync, statSync } from 'node:fs'
 import * as turf from '@turf/turf'
 
-const OUT = 'src/core/components/viewers/map/scenarios/iqaluit-incident/iqaluitCoastline.json'
+const OUT = 'src/core/components/viewers/map/scenarios/iqaluit-incident/coastlineData.ts'
 const BBOX = [63.60, -68.72, 63.80, -68.28]      // s,w,n,e — Iqaluit / inner Frobisher Bay
 const CLIP = [-68.62, 63.62, -68.26, 63.76]      // w,s,e,n — keep only the demo area
 const TOL = 0.00018                              // Douglas-Peucker tolerance (~18 m)
@@ -37,8 +37,15 @@ function bake(osm) {
     f.geometry.coordinates = f.geometry.coordinates.map(round)
     feats.push(f)
   }
-  const fc = { type:'FeatureCollection', attribution:'© OpenStreetMap contributors (ODbL)', features: feats }
-  writeFileSync(OUT, JSON.stringify(fc))
+  const fc = { type:'FeatureCollection', features: feats }
+  // Emit a .ts module (not .json): tsup's preserve-modules build copies .ts to
+  // dist but would drop a .json import, breaking the runtime resolve.
+  const ts = `// AUTO-GENERATED — do not edit by hand. Regenerate via scripts/build-coastline.mjs.\n`
+    + `// Iqaluit / Frobisher Bay land + coastline edges from OpenStreetMap.\n`
+    + `// © OpenStreetMap contributors (ODbL). Clipped to the demo area + simplified.\n`
+    + `import type { FeatureCollection } from 'geojson'\n\n`
+    + `export const iqaluitCoastline: FeatureCollection = ${JSON.stringify(fc)}\n`
+  writeFileSync(OUT, ts)
   console.log(`baked ${feats.length} ways -> ${OUT} (${statSync(OUT).size} bytes)`)
   return fc
 }
