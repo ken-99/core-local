@@ -74,3 +74,28 @@ export function interpAlong(path: Coord[], u: number): Coord {
   const [bx, by] = path[i + 1]
   return [ax + (bx - ax) * frac, ay + (by - ay) * frac]
 }
+
+const MAX_PARCEL_AGE = 60 // age (time-units) at which a parcel has fully dissipated
+
+export interface Parcel {
+  position: Coord
+  weight: number     // 0..1 heatmap weight; fades with age
+  distanceKm: number // distance travelled from the warehouse
+}
+
+/**
+ * Advect one smoke parcel of the given `age` downwind. `windBearing` is the
+ * compass direction (deg, 0=N, 90=E) the smoke drifts TOWARD; `windSpeed` is in
+ * knots. Lateral wander grows with age to read as billowing. Pure/deterministic.
+ */
+export function advectParcel(age: number, windBearing: number, windSpeed: number): Parcel {
+  if (age <= 0) return { position: WAREHOUSE, weight: 0, distanceKm: 0 }
+  const distanceKm = (0.04 + windSpeed * 0.004) * age
+  // deterministic lateral wobble (no RNG) — small bearing oscillation, growing with age
+  const wobbleDeg = Math.sin(age * 0.6) * 6 * Math.min(1, age / 20)
+  const bearing = windBearing + wobbleDeg
+  const dest = destination(WAREHOUSE, distanceKm, bearing, { units: 'kilometers' })
+  const [lng, lat] = dest.geometry.coordinates as Coord
+  const weight = Math.max(0, 1 - age / MAX_PARCEL_AGE)
+  return { position: [lng, lat], weight, distanceKm }
+}
