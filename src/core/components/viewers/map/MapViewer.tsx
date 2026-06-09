@@ -19,6 +19,7 @@ import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
+import { IqaluitScenarioDemo } from './scenarios/iqaluit-incident'
 
 // Register the pmtiles:// protocol so PMTiles basemaps can load. Runs once on
 // module load (this is a 'use client' module, so it only runs in the browser).
@@ -207,6 +208,9 @@ export function MapViewer({ width = '100%', height = '100%', organization }: Pro
               <MapLayers />
               {/* Bottom-left stack: legend above the layers/styling card, gap auto-managed by flex. */}
               <div className="absolute bottom-[10px] left-3 z-10 flex flex-col gap-2 pointer-events-none">
+                {process.env.NODE_ENV === 'development' && mapState.map.map && (
+                  <IqaluitScenarioDemo map={mapState.map.map as maplibregl.Map} />
+                )}
                 {/* Portal slot for on-map WMS time controls; display:contents so an
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
