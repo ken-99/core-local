@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS, bearingDeg, pathLengthKm } from './scenario'
+import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS, bearingDeg, pathLengthKm, evacZoneCollection, EVAC_RADII_KM } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -117,5 +117,36 @@ describe('pathLengthKm', () => {
   it('sums segment distances (≈11.1 km for two 0.05° lat segments)', () => {
     const len = pathLengthKm([[-68.5, 63.70], [-68.5, 63.75], [-68.5, 63.80]])
     expect(len).toBeCloseTo(11.1, 0)
+  })
+})
+
+describe('evacZoneCollection', () => {
+  it('returns four zones tagged red→green outward', () => {
+    const fc = evacZoneCollection()
+    expect(fc.features).toHaveLength(4)
+    expect(fc.features.map(f => f.properties!.zone)).toEqual(['red', 'orange', 'yellow', 'green'])
+  })
+
+  it('makes the innermost a solid disk and the outer three annular (with a hole)', () => {
+    const fc = evacZoneCollection()
+    expect(fc.features[0].geometry.coordinates).toHaveLength(1) // disk: outer ring only
+    expect(fc.features[1].geometry.coordinates).toHaveLength(2) // annulus: outer + hole
+    expect(fc.features[2].geometry.coordinates).toHaveLength(2)
+    expect(fc.features[3].geometry.coordinates).toHaveLength(2)
+  })
+
+  it('uses strictly increasing radii', () => {
+    for (let i = 1; i < EVAC_RADII_KM.length; i++) {
+      expect(EVAC_RADII_KM[i]).toBeGreaterThan(EVAC_RADII_KM[i - 1])
+    }
+  })
+
+  it('produces closed rings (first coord === last coord)', () => {
+    const fc = evacZoneCollection()
+    for (const f of fc.features) {
+      for (const ring of f.geometry.coordinates) {
+        expect(ring[0]).toEqual(ring[ring.length - 1])
+      }
+    }
   })
 })
