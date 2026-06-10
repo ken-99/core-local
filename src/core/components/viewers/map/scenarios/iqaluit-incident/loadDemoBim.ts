@@ -13,13 +13,13 @@ export const DEMO_BUILDING_ID: number | null = 3267
 
 /** Where the demo drops the real BIM model on the map — tuned in-browser. Just north
  *  of the warehouse, in the dock opening; rotated to align with the shoreline.
- *  `elevation` is a negative offset (metres) that cancels the model's georeferenced
- *  Ottawa altitude so it seats on Iqaluit's near-sea-level terrain instead of floating. */
+ *  `elevation` (metres above terrain) seats the model on the dock — tuned live with the
+ *  control-card slider. Adjustable at runtime; this is just the starting value. */
 export const DEMO_BIM_PLACEMENT = {
   lng: INCIDENT_ORIGIN[0],
   lat: INCIDENT_ORIGIN[1],
   rotation: -90,
-  elevation: -70,
+  elevation: 11,
 }
 
 /**

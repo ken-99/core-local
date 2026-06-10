@@ -174,11 +174,19 @@ export function advectParcel(age: number, windBearing: number, windSpeed: number
   return { position: [lng, lat], weight, distanceKm }
 }
 
-// Smoke-plume tuning. 28 of the 30 available slots (MAX_PARCEL_AGE / spacing)
-// are emitted, leaving a short gap at the source for visual breathing room.
-const PARCEL_COUNT = 28          // parcels emitted along the plume
+// Smoke-plume tuning. We over-emit past the ~30 age slots (MAX_PARCEL_AGE / spacing)
+// so multiple parcels share each age but get DIFFERENT per-parcel scatter — that
+// overlap is what makes the plume read as a billowing cloud rather than a thread.
+const PARCEL_COUNT = 44          // parcels emitted along the plume
 const PARCEL_EMIT_SPACING = 2    // age gap (time-units) between consecutive parcels
 const PARCEL_EMIT_RATE = 6       // age advanced per time-unit at the source
+
+/** Deterministic pseudo-random in [0,1) from an integer key. No RNG, so the scene
+ *  stays reproducible/testable — used only to scatter smoke parcels per-parcel. */
+function hash01(n: number): number {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453
+  return x - Math.floor(x)
+}
 
 /** Fire intensity in [0.6, 1.0], flickering deterministically with time. */
 export function flicker(t: number): number {
@@ -212,7 +220,17 @@ export function smokeParcelCollection(
     // defensive: drop fully-dissipated parcels. The age formula keeps age in
     // [0, MAX_PARCEL_AGE) so this rarely fires, but it guards future tuning.
     if (p.weight <= 0) continue
-    features.push({ coord: p.position, props: { weight: p.weight } })
+    // Per-parcel turbulence (deterministic, no RNG): scatter each parcel off the
+    // centre line — sideways (perpendicular to the wind) plus a little along it — by
+    // an amount that grows downwind, so the plume billows instead of tracing a thread.
+    // Weight is varied per parcel too, so the heatmap density looks uneven/wispy.
+    const grow = 0.25 + (age / MAX_PARCEL_AGE) * 1.4
+    const lateralKm = (hash01(i) - 0.5) * 0.42 * grow
+    const alongKm = (hash01(i * 2 + 7) - 0.5) * 0.30 * grow
+    const side = destination(p.position, lateralKm, windBearing + 90, { units: 'kilometers' })
+    const along = destination(side.geometry.coordinates as Coord, alongKm, windBearing, { units: 'kilometers' })
+    const weight = clamp01(p.weight * (0.5 + 0.5 * hash01(i * 3 + 19)))
+    features.push({ coord: along.geometry.coordinates as Coord, props: { weight } })
   }
   return pointFC(features)
 }
