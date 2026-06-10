@@ -4,7 +4,7 @@ import type maplibregl from 'maplibre-gl'
 import { Marker } from 'maplibre-gl'
 import {
   WAREHOUSE, WAREHOUSE_FOOTPRINT,
-  symbolCollection, smokeParcelCollection, fireCollection,
+  symbolCollection, smokeParcelCollection, fireCollection, evacZoneCollection,
 } from './scenario'
 // Note: vessel loops were validated in water against OpenStreetMap coastline data
 // (© OpenStreetMap contributors, ODbL) at build time — see coastlineData.ts +
@@ -15,6 +15,7 @@ interface Props {
   t: number
   windBearing: number
   windSpeed: number
+  evacVisible: boolean
 }
 
 const IDS = {
@@ -22,6 +23,7 @@ const IDS = {
   smokeSrc: 'iqaluit-smoke-src', smokeLayer: 'iqaluit-smoke',
   fireSrc: 'iqaluit-fire-src', fireLayer: 'iqaluit-fire',
   symSrc: 'iqaluit-symbols-src', symLayer: 'iqaluit-symbols',
+  evacSrc: 'iqaluit-evac-src', evacFill: 'iqaluit-evac-fill', evacLine: 'iqaluit-evac-line',
 }
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] }
@@ -70,7 +72,7 @@ function makeIconData(kind: 'plane' | 'boat'): ImageData {
   return ctx.getImageData(0, 0, ICON_PX, ICON_PX)
 }
 
-export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed }) => {
+export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed, evacVisible }) => {
   const markerRef = React.useRef<Marker | null>(null)
 
   // Add sources + layers + wind marker once; remove everything on unmount.
@@ -80,6 +82,7 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
       if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data })
     }
     addSrc(IDS.warehouseSrc, WAREHOUSE_FOOTPRINT)
+    addSrc(IDS.evacSrc, evacZoneCollection())
     addSrc(IDS.smokeSrc, EMPTY)
     addSrc(IDS.fireSrc, EMPTY)
     addSrc(IDS.symSrc, EMPTY)
@@ -92,6 +95,20 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
         id: IDS.warehouseLayer, type: 'fill', source: IDS.warehouseSrc,
         paint: { 'fill-color': '#b9b1a0', 'fill-opacity': 0.5, 'fill-outline-color': '#7c2d12' },
       })
+    }
+    if (!map.getLayer(IDS.evacFill)) {
+      map.addLayer({
+        id: IDS.evacFill, type: 'fill', source: IDS.evacSrc,
+        layout: { visibility: 'none' },
+        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.18 },
+      } as maplibregl.LayerSpecification)
+    }
+    if (!map.getLayer(IDS.evacLine)) {
+      map.addLayer({
+        id: IDS.evacLine, type: 'line', source: IDS.evacSrc,
+        layout: { visibility: 'none' },
+        paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-opacity': 0.9 },
+      } as maplibregl.LayerSpecification)
     }
     if (!map.getLayer(IDS.smokeLayer)) {
       map.addLayer({
@@ -143,10 +160,10 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(WAREHOUSE).addTo(map)
 
     return () => {
-      for (const id of [IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
+      for (const id of [IDS.evacFill, IDS.evacLine, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
         if (map.getLayer(id)) map.removeLayer(id)
       }
-      for (const id of [IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
+      for (const id of [IDS.evacSrc, IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
         if (map.getSource(id)) map.removeSource(id)
       }
       for (const id of [ICON.plane, ICON.boat]) {
@@ -169,6 +186,15 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     setData(IDS.fireSrc, fireCollection(t))
     markerRef.current?.setRotation(windBearing)
   }, [map, t, windBearing, windSpeed])
+
+  // Toggle evacuation-ring visibility without touching the source data.
+  React.useEffect(() => {
+    if (!map) return
+    const v = evacVisible ? 'visible' : 'none'
+    for (const id of [IDS.evacFill, IDS.evacLine]) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v)
+    }
+  }, [map, evacVisible])
 
   return null
 }

@@ -18,6 +18,7 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
   const [playbackSpeed, setPlaybackSpeed] = React.useState(1)
   const [windBearing, setWindBearing] = React.useState(120)
   const [windSpeed, setWindSpeed] = React.useState(18)
+  const [evacVisible, setEvacVisible] = React.useState(false)
   const { t, reset } = useScenarioClock(playing, playbackSpeed)
 
   return (
@@ -33,9 +34,11 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
         windSpeed={windSpeed}
         onWindBearingChange={setWindBearing}
         onWindSpeedChange={setWindSpeed}
+        evacVisible={evacVisible}
+        onEvacToggle={() => setEvacVisible(v => !v)}
       />
       <ScenarioLegend />
-      <IqaluitScenarioLayer map={map} t={t} windBearing={windBearing} windSpeed={windSpeed} />
+      <IqaluitScenarioLayer map={map} t={t} windBearing={windBearing} windSpeed={windSpeed} evacVisible={evacVisible} />
     </>
   )
 }

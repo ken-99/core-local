@@ -12,6 +12,8 @@ interface ScenarioControlProps {
   windSpeed: number                // knots
   onWindBearingChange: (deg: number) => void
   onWindSpeedChange: (kn: number) => void
+  evacVisible: boolean
+  onEvacToggle: () => void
 }
 
 const TEAL = '#0d9488'
@@ -22,6 +24,7 @@ const cardinal = (b: number): string => CARDINALS[Math.round((b % 360) / 45) % 8
 export const ScenarioControl: React.FC<ScenarioControlProps> = ({
   playing, onPlayToggle, onRestart, onStop, playbackSpeed, onPlaybackSpeedChange,
   windBearing, windSpeed, onWindBearingChange, onWindSpeedChange,
+  evacVisible, onEvacToggle,
 }) => {
   const dialRef = React.useRef<SVGSVGElement>(null)
   const dragging = React.useRef(false)
@@ -84,6 +87,18 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
             {s}×
           </button>
         ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 7, marginBottom: 11 }}>
+        <button type="button" onClick={onEvacToggle}
+          style={{
+            height: 26, padding: '0 10px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 12,
+            border: `1px solid ${evacVisible ? TEAL : '#cbd5e1'}`,
+            background: evacVisible ? TEAL : '#fff',
+            color: evacVisible ? '#fff' : '#334155',
+          }}>
+          {evacVisible ? '◉ Evac zones on' : '○ Evac zones'}
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
