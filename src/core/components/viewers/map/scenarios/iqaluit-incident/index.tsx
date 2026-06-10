@@ -7,6 +7,7 @@ import { ScenarioLegend } from './ScenarioLegend'
 import { IqaluitScenarioLayer } from './IqaluitScenarioLayer'
 import { useBimContext } from '../../../../../store'
 import { loadDemoBim, DEMO_BUILDING_ID, DEMO_BIM_PLACEMENT } from './loadDemoBim'
+import { setGeocoderMarkerSuppressed, removeGeocoderMarker } from '../../utils/geocoder'
 import type { DbFile } from '../../../../../types/dbTypes'
 
 interface Props { map: maplibregl.Map }
@@ -61,6 +62,14 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
     const f = bimFileRef.current
     if (f) bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: f.name } })
   }, [bimDispatch])
+
+  // While the demo is mounted, stop the geocoder dropping its blue result pin (camera
+  // fly is kept). Also clear any stray pin already on the map. Restored on unmount.
+  React.useEffect(() => {
+    setGeocoderMarkerSuppressed(true)
+    removeGeocoderMarker()
+    return () => setGeocoderMarkerSuppressed(false)
+  }, [])
 
   // Live elevation tuning from the menu slider. BimLayer reads `bimFile.elevation` in
   // its render loop, so mutating the loaded model's elevation + repainting re-seats it

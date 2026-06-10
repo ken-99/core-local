@@ -13,6 +13,12 @@ const getGeocoderMarkerManager = (): MarkerManager => {
   return geocoderMarkerManager
 }
 
+// Opt-in switch: when true, geocoder selections skip the result pin but still
+// navigate (flyTo/fitBounds). Set by the dev-only Iqaluit demo while it's mounted so
+// the blue marker doesn't clutter the scene; default false → no app-wide change.
+let suppressGeocoderMarker = false
+export const setGeocoderMarkerSuppressed = (v: boolean): void => { suppressGeocoderMarker = v }
+
 // Convert longitude and latitude into Municipality and Country Subdivision
 export const getMunicipalityAndProvince = async (latitude: string, longitude: string, countryCode?: string) => {
   try {
