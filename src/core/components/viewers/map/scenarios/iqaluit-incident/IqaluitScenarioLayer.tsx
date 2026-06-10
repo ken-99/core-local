@@ -16,6 +16,7 @@ interface Props {
   windBearing: number
   windSpeed: number
   evacVisible: boolean
+  incidentOn: boolean              // false = erase fire + smoke (Stop)
   syntheticBim: boolean
   onWarehouseClick: () => void
 }
@@ -75,7 +76,7 @@ function makeIconData(kind: 'plane' | 'boat'): ImageData {
   return ctx.getImageData(0, 0, ICON_PX, ICON_PX)
 }
 
-export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed, evacVisible, syntheticBim, onWarehouseClick }) => {
+export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed, evacVisible, incidentOn, syntheticBim, onWarehouseClick }) => {
   const markerRef = React.useRef<Marker | null>(null)
 
   // Add sources + layers + wind marker once; remove everything on unmount.
@@ -192,10 +193,11 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
       src?.setData(data)
     }
     setData(IDS.symSrc, symbolCollection(t))
-    setData(IDS.smokeSrc, smokeParcelCollection(t, windBearing, windSpeed))
-    setData(IDS.fireSrc, fireCollection(t))
+    // Stop (incidentOn=false) erases the fire + smoke; planes/boats + wind arrow remain.
+    setData(IDS.smokeSrc, incidentOn ? smokeParcelCollection(t, windBearing, windSpeed) : EMPTY)
+    setData(IDS.fireSrc, incidentOn ? fireCollection(t) : EMPTY)
     markerRef.current?.setRotation(windBearing)
-  }, [map, t, windBearing, windSpeed])
+  }, [map, t, windBearing, windSpeed, incidentOn])
 
   // Toggle evacuation-ring visibility without touching the source data.
   React.useEffect(() => {
