@@ -23,6 +23,7 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
   const [windBearing, setWindBearing] = React.useState(120)
   const [windSpeed, setWindSpeed] = React.useState(18)
   const [evacVisible, setEvacVisible] = React.useState(false)
+  const [incidentOn, setIncidentOn] = React.useState(true) // fire + smoke present; Stop erases it
   const { t, reset } = useScenarioClock(playing, playbackSpeed)
 
   const { dispatch: bimDispatch } = useBimContext()
@@ -86,9 +87,9 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
     <>
       <ScenarioControl
         playing={playing}
-        onPlayToggle={() => setPlaying(p => !p)}
-        onRestart={() => { reset(); }}
-        onStop={() => { setPlaying(false); reset(); }}
+        onPlayToggle={() => { setPlaying(p => !p); setIncidentOn(true) }}
+        onRestart={() => { reset(); setIncidentOn(true) }}
+        onStop={() => { setPlaying(false); reset(); setIncidentOn(false) }}
         playbackSpeed={playbackSpeed}
         onPlaybackSpeedChange={setPlaybackSpeed}
         windBearing={windBearing}
@@ -104,7 +105,7 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
       />
       <ScenarioLegend />
       <IqaluitScenarioLayer map={map} t={t} windBearing={windBearing} windSpeed={windSpeed}
-        evacVisible={evacVisible} syntheticBim={syntheticBim} onWarehouseClick={onToggleBim} />
+        evacVisible={evacVisible} incidentOn={incidentOn} syntheticBim={syntheticBim} onWarehouseClick={onToggleBim} />
     </>
   )
 }
