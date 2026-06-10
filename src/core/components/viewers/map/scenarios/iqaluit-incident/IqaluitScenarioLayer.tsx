@@ -16,6 +16,8 @@ interface Props {
   windBearing: number
   windSpeed: number
   evacVisible: boolean
+  syntheticBim: boolean
+  onWarehouseClick: () => void
 }
 
 const IDS = {
@@ -24,6 +26,7 @@ const IDS = {
   fireSrc: 'iqaluit-fire-src', fireLayer: 'iqaluit-fire',
   symSrc: 'iqaluit-symbols-src', symLayer: 'iqaluit-symbols',
   evacSrc: 'iqaluit-evac-src', evacFill: 'iqaluit-evac-fill', evacLine: 'iqaluit-evac-line',
+  bimExtrudeLayer: 'iqaluit-bim-extrude',
 }
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] }
@@ -72,7 +75,7 @@ function makeIconData(kind: 'plane' | 'boat'): ImageData {
   return ctx.getImageData(0, 0, ICON_PX, ICON_PX)
 }
 
-export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed, evacVisible }) => {
+export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, windSpeed, evacVisible, syntheticBim, onWarehouseClick }) => {
   const markerRef = React.useRef<Marker | null>(null)
 
   // Add sources + layers + wind marker once; remove everything on unmount.
@@ -108,6 +111,13 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
         id: IDS.evacLine, type: 'line', source: IDS.evacSrc,
         layout: { visibility: 'none' },
         paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-opacity': 0.9 },
+      } as maplibregl.LayerSpecification)
+    }
+    if (!map.getLayer(IDS.bimExtrudeLayer)) {
+      map.addLayer({
+        id: IDS.bimExtrudeLayer, type: 'fill-extrusion', source: IDS.warehouseSrc,
+        layout: { visibility: 'none' },
+        paint: { 'fill-extrusion-color': '#64748b', 'fill-extrusion-height': 12, 'fill-extrusion-opacity': 0.85 },
       } as maplibregl.LayerSpecification)
     }
     if (!map.getLayer(IDS.smokeLayer)) {
@@ -160,7 +170,7 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(WAREHOUSE).addTo(map)
 
     return () => {
-      for (const id of [IDS.evacFill, IDS.evacLine, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
+      for (const id of [IDS.bimExtrudeLayer, IDS.evacFill, IDS.evacLine, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
         if (map.getLayer(id)) map.removeLayer(id)
       }
       for (const id of [IDS.evacSrc, IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
@@ -195,6 +205,30 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v)
     }
   }, [map, evacVisible])
+
+  // Show/hide the synthetic 3D massing fallback.
+  React.useEffect(() => {
+    if (!map) return
+    if (map.getLayer(IDS.bimExtrudeLayer)) {
+      map.setLayoutProperty(IDS.bimExtrudeLayer, 'visibility', syntheticBim ? 'visible' : 'none')
+    }
+  }, [map, syntheticBim])
+
+  // Make the warehouse footprint clickable (toggles the BIM model) + show a pointer.
+  React.useEffect(() => {
+    if (!map) return
+    const onClick = () => onWarehouseClick()
+    const enter = () => { map.getCanvas().style.cursor = 'pointer' }
+    const leave = () => { map.getCanvas().style.cursor = '' }
+    map.on('click', IDS.warehouseLayer, onClick)
+    map.on('mouseenter', IDS.warehouseLayer, enter)
+    map.on('mouseleave', IDS.warehouseLayer, leave)
+    return () => {
+      map.off('click', IDS.warehouseLayer, onClick)
+      map.off('mouseenter', IDS.warehouseLayer, enter)
+      map.off('mouseleave', IDS.warehouseLayer, leave)
+    }
+  }, [map, onWarehouseClick])
 
   return null
 }
