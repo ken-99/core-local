@@ -26,6 +26,7 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
         playing={playing}
         onPlayToggle={() => setPlaying(p => !p)}
         onRestart={() => { reset(); }}
+        onStop={() => { setPlaying(false); reset(); }}
         playbackSpeed={playbackSpeed}
         onPlaybackSpeedChange={setPlaybackSpeed}
         windBearing={windBearing}

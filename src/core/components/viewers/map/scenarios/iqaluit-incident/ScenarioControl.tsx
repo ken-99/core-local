@@ -5,6 +5,7 @@ interface ScenarioControlProps {
   playing: boolean
   onPlayToggle: () => void
   onRestart: () => void
+  onStop: () => void
   playbackSpeed: number            // clock multiplier (0.5×–4×)
   onPlaybackSpeedChange: (x: number) => void
   windBearing: number              // deg, 0=N, the way smoke drifts TOWARD
@@ -19,7 +20,7 @@ const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 const cardinal = (b: number): string => CARDINALS[Math.round((b % 360) / 45) % 8]
 
 export const ScenarioControl: React.FC<ScenarioControlProps> = ({
-  playing, onPlayToggle, onRestart, playbackSpeed, onPlaybackSpeedChange,
+  playing, onPlayToggle, onRestart, onStop, playbackSpeed, onPlaybackSpeedChange,
   windBearing, windSpeed, onWindBearingChange, onWindSpeedChange,
 }) => {
   const dialRef = React.useRef<SVGSVGElement>(null)
@@ -63,6 +64,10 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
         <button type="button" onClick={onRestart}
           style={{ height: 30, padding: '0 12px', border: 'none', borderRadius: 6, background: '#e2e8f0', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
           ⟲ Restart
+        </button>
+        <button type="button" onClick={onStop}
+          style={{ height: 30, padding: '0 12px', border: 'none', borderRadius: 6, background: '#fee2e2', color: '#991b1b', fontWeight: 600, cursor: 'pointer' }}>
+          ■ Stop
         </button>
       </div>
 
