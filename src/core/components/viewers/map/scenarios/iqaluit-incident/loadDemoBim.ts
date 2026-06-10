@@ -19,7 +19,7 @@ export const DEMO_BIM_PLACEMENT = {
   lng: INCIDENT_ORIGIN[0],
   lat: INCIDENT_ORIGIN[1],
   rotation: -90,
-  elevation: -75,
+  elevation: -70,
 }
 
 /**
