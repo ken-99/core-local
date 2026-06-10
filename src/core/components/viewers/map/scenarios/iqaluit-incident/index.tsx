@@ -5,6 +5,10 @@ import { useScenarioClock } from './useScenarioClock'
 import { ScenarioControl } from './ScenarioControl'
 import { ScenarioLegend } from './ScenarioLegend'
 import { IqaluitScenarioLayer } from './IqaluitScenarioLayer'
+import { useBimContext } from '../../../../../store'
+import { loadDemoBim, DEMO_BUILDING_ID } from './loadDemoBim'
+import { WAREHOUSE } from './scenario'
+import type { DbFile } from '../../../../../types/dbTypes'
 
 interface Props { map: maplibregl.Map }
 
@@ -21,6 +25,42 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
   const [evacVisible, setEvacVisible] = React.useState(false)
   const { t, reset } = useScenarioClock(playing, playbackSpeed)
 
+  const { dispatch: bimDispatch } = useBimContext()
+  const [bimOn, setBimOn] = React.useState(false)
+  const [syntheticBim, setSyntheticBim] = React.useState(false)
+  const bimFileRef = React.useRef<DbFile | null>(null)
+
+  const onToggleBim = React.useCallback(async () => {
+    if (bimOn) {
+      const f = bimFileRef.current
+      if (f) {
+        bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: f.name } })
+        bimFileRef.current = null
+      }
+      setSyntheticBim(false)
+      setBimOn(false)
+      return
+    }
+    const fetched = await loadDemoBim(DEMO_BUILDING_ID)
+    if (fetched) {
+      const bimFile: DbFile = { ...fetched, lng: WAREHOUSE[0], lat: WAREHOUSE[1], rotation: 0, elevation: 0 }
+      bimFileRef.current = bimFile
+      bimDispatch({ type: 'TOGGLE_BIM_TO_MAP', payload: { buildingModel: { bimFile, building: null } } })
+      setSyntheticBim(false)
+      console.info('[iqaluit-demo] loaded real BIM model:', bimFile.name)
+    } else {
+      setSyntheticBim(true)
+      console.info('[iqaluit-demo] no real model available — showing synthetic massing')
+    }
+    setBimOn(true)
+  }, [bimOn, bimDispatch])
+
+  // On unmount, remove any real model we added so the demo leaves no shared-store residue.
+  React.useEffect(() => () => {
+    const f = bimFileRef.current
+    if (f) bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: f.name } })
+  }, [bimDispatch])
+
   return (
     <>
       <ScenarioControl
@@ -36,9 +76,12 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
         onWindSpeedChange={setWindSpeed}
         evacVisible={evacVisible}
         onEvacToggle={() => setEvacVisible(v => !v)}
+        bimOn={bimOn}
+        onToggleBim={onToggleBim}
       />
       <ScenarioLegend />
-      <IqaluitScenarioLayer map={map} t={t} windBearing={windBearing} windSpeed={windSpeed} evacVisible={evacVisible} />
+      <IqaluitScenarioLayer map={map} t={t} windBearing={windBearing} windSpeed={windSpeed}
+        evacVisible={evacVisible} syntheticBim={syntheticBim} onWarehouseClick={onToggleBim} />
     </>
   )
 }

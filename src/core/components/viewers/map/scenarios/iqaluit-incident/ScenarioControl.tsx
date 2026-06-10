@@ -14,6 +14,8 @@ interface ScenarioControlProps {
   onWindSpeedChange: (kn: number) => void
   evacVisible: boolean
   onEvacToggle: () => void
+  bimOn: boolean
+  onToggleBim: () => void
 }
 
 const TEAL = '#0d9488'
@@ -24,7 +26,7 @@ const cardinal = (b: number): string => CARDINALS[Math.round((b % 360) / 45) % 8
 export const ScenarioControl: React.FC<ScenarioControlProps> = ({
   playing, onPlayToggle, onRestart, onStop, playbackSpeed, onPlaybackSpeedChange,
   windBearing, windSpeed, onWindBearingChange, onWindSpeedChange,
-  evacVisible, onEvacToggle,
+  evacVisible, onEvacToggle, bimOn, onToggleBim,
 }) => {
   const dialRef = React.useRef<SVGSVGElement>(null)
   const dragging = React.useRef(false)
@@ -98,6 +100,15 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
             color: evacVisible ? '#fff' : '#334155',
           }}>
           {evacVisible ? '◉ Evac zones on' : '○ Evac zones'}
+        </button>
+        <button type="button" onClick={onToggleBim}
+          style={{
+            height: 26, padding: '0 10px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 12,
+            border: `1px solid ${bimOn ? TEAL : '#cbd5e1'}`,
+            background: bimOn ? TEAL : '#fff',
+            color: bimOn ? '#fff' : '#334155',
+          }}>
+          {bimOn ? '◉ BIM on' : '⬚ Load BIM'}
         </button>
       </div>
 
