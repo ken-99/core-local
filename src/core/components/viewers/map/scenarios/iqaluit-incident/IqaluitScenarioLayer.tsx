@@ -6,14 +6,9 @@ import {
   WAREHOUSE, WAREHOUSE_FOOTPRINT,
   symbolCollection, smokeParcelCollection, fireCollection,
 } from './scenario'
-// Real land/coastline edges for Iqaluit / Frobisher Bay, from OpenStreetMap
-// (© OpenStreetMap contributors, ODbL) — fetched once via Overpass, clipped to the
-// demo area + simplified, baked as a static TS module (bundles cleanly under tsup's
-// preserve-modules build; a .json import would not be copied to dist). Used as an
-// on-map reference and ground truth for keeping vessels in water.
-import { iqaluitCoastline as coastline } from './coastlineData'
-
-const OSM_ATTRIBUTION = '© OpenStreetMap contributors (ODbL)'
+// Note: vessel loops were validated in water against OpenStreetMap coastline data
+// (© OpenStreetMap contributors, ODbL) at build time — see coastlineData.ts +
+// scripts/build-coastline.mjs. That data is no longer drawn on the map at runtime.
 
 interface Props {
   map: maplibregl.Map
@@ -23,7 +18,6 @@ interface Props {
 }
 
 const IDS = {
-  coastSrc: 'iqaluit-coast-src', coastLayer: 'iqaluit-coast',
   warehouseSrc: 'iqaluit-warehouse-src', warehouseLayer: 'iqaluit-warehouse',
   smokeSrc: 'iqaluit-smoke-src', smokeLayer: 'iqaluit-smoke',
   fireSrc: 'iqaluit-fire-src', fireLayer: 'iqaluit-fire',
@@ -85,9 +79,6 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     const addSrc = (id: string, data: GeoJSON.GeoJSON) => {
       if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data })
     }
-    if (!map.getSource(IDS.coastSrc)) {
-      map.addSource(IDS.coastSrc, { type: 'geojson', data: coastline as GeoJSON.GeoJSON, attribution: OSM_ATTRIBUTION })
-    }
     addSrc(IDS.warehouseSrc, WAREHOUSE_FOOTPRINT)
     addSrc(IDS.smokeSrc, EMPTY)
     addSrc(IDS.fireSrc, EMPTY)
@@ -96,12 +87,6 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     if (!map.hasImage(ICON.plane)) map.addImage(ICON.plane, makeIconData('plane'), { pixelRatio: 2 })
     if (!map.hasImage(ICON.boat)) map.addImage(ICON.boat, makeIconData('boat'), { pixelRatio: 2 })
 
-    if (!map.getLayer(IDS.coastLayer)) {
-      map.addLayer({
-        id: IDS.coastLayer, type: 'line', source: IDS.coastSrc,
-        paint: { 'line-color': '#7dd3fc', 'line-width': 1.2, 'line-opacity': 0.6 },
-      })
-    }
     if (!map.getLayer(IDS.warehouseLayer)) {
       map.addLayer({
         id: IDS.warehouseLayer, type: 'fill', source: IDS.warehouseSrc,
@@ -113,14 +98,16 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
         id: IDS.smokeLayer, type: 'heatmap', source: IDS.smokeSrc,
         paint: {
           'heatmap-weight': ['get', 'weight'],
-          'heatmap-intensity': 1,
-          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 13, 60],
-          'heatmap-opacity': 0.75,
+          // Scale intensity + radius UP with zoom so the plume stays dense + obvious
+          // when zoomed in (heatmap density otherwise thins as the points spread out).
+          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, 1, 12, 1.8, 15, 3.5, 18, 6],
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 12, 45, 15, 120, 18, 260],
+          'heatmap-opacity': 0.9,
           'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
             0, 'rgba(120,120,120,0)',
-            0.2, 'rgba(110,105,100,0.35)',
-            0.6, 'rgba(140,140,140,0.7)',
-            1, 'rgba(200,200,200,0.9)'],
+            0.12, 'rgba(110,108,105,0.55)',
+            0.5, 'rgba(150,150,150,0.85)',
+            1, 'rgba(215,215,215,0.97)'],
         },
       } as maplibregl.LayerSpecification)
     }
@@ -158,10 +145,10 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
     markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(WAREHOUSE).addTo(map)
 
     return () => {
-      for (const id of [IDS.coastLayer, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
+      for (const id of [IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {
         if (map.getLayer(id)) map.removeLayer(id)
       }
-      for (const id of [IDS.coastSrc, IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
+      for (const id of [IDS.warehouseSrc, IDS.smokeSrc, IDS.fireSrc, IDS.symSrc]) {
         if (map.getSource(id)) map.removeSource(id)
       }
       for (const id of [ICON.plane, ICON.boat]) {
