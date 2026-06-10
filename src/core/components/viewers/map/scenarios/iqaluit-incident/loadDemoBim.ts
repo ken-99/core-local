@@ -10,6 +10,15 @@ import type { DbFile } from '../../../../../types/dbTypes'
  */
 export const DEMO_BUILDING_ID: number | null = 3267
 
+/** Where the demo drops the real BIM model on the map — tuned in-browser. Just north
+ *  of the warehouse, in the dock opening; rotated to align with the shoreline. */
+export const DEMO_BIM_PLACEMENT = {
+  lng: -68.5049729892321,
+  lat: 63.744153446098714,
+  rotation: -90,
+  elevation: 0,
+}
+
 /**
  * Fetch a real BIM model file for the demo building. Calls the existing authenticated
  * route GET /api/files/building/{id}, which returns `{ files: DbFile[] }` — each file

@@ -6,8 +6,7 @@ import { ScenarioControl } from './ScenarioControl'
 import { ScenarioLegend } from './ScenarioLegend'
 import { IqaluitScenarioLayer } from './IqaluitScenarioLayer'
 import { useBimContext } from '../../../../../store'
-import { loadDemoBim, DEMO_BUILDING_ID } from './loadDemoBim'
-import { WAREHOUSE } from './scenario'
+import { loadDemoBim, DEMO_BUILDING_ID, DEMO_BIM_PLACEMENT } from './loadDemoBim'
 import type { DbFile } from '../../../../../types/dbTypes'
 
 interface Props { map: maplibregl.Map }
@@ -43,7 +42,7 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
     }
     const fetched = await loadDemoBim(DEMO_BUILDING_ID)
     if (fetched) {
-      const bimFile: DbFile = { ...fetched, lng: WAREHOUSE[0], lat: WAREHOUSE[1], rotation: 0, elevation: 0 }
+      const bimFile: DbFile = { ...fetched, ...DEMO_BIM_PLACEMENT }
       bimFileRef.current = bimFile
       bimDispatch({ type: 'TOGGLE_BIM_TO_MAP', payload: { buildingModel: { bimFile, building: null } } })
       setSyntheticBim(false)
