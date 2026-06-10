@@ -2,7 +2,7 @@
 // No React, no MapLibre — everything here is deterministic from its inputs so
 // it can be unit-tested and so the layer can recompute cheaply each frame.
 import type { FeatureCollection, Point, Polygon } from 'geojson'
-import { destination, distance, bearing as turfBearing } from '@turf/turf'
+import { destination, distance, bearing as turfBearing, circle } from '@turf/turf'
 
 export type Lng = number
 export type Lat = number
@@ -41,6 +41,34 @@ export const WAREHOUSE_FOOTPRINT: FeatureCollection<Polygon> = {
       ]],
     },
   }],
+}
+
+// --- Evacuation zones: concentric annular bands around the fire. Red innermost
+// (a solid disk), then orange / yellow / green bands. Each outer zone is an annulus
+// (outer ring + inner hole) so band colours never overlap. Pure + static. ---
+export const EVAC_RADII_KM = [0.3, 0.6, 1.0, 1.6]
+const EVAC_ZONES: { zone: string; color: string }[] = [
+  { zone: 'red', color: '#dc2626' },
+  { zone: 'orange', color: '#f97316' },
+  { zone: 'yellow', color: '#eab308' },
+  { zone: 'green', color: '#22c55e' },
+]
+
+/** Four concentric evacuation bands centered on the warehouse fire. */
+export function evacZoneCollection(): FeatureCollection<Polygon> {
+  const ringCoords = (km: number): Coord[] =>
+    circle(WAREHOUSE, km, { steps: 64, units: 'kilometers' })
+      .geometry.coordinates[0] as Coord[]
+  const features = EVAC_RADII_KM.map((r, i) => {
+    const rings: Coord[][] = [ringCoords(r)]
+    if (i > 0) rings.push(ringCoords(EVAC_RADII_KM[i - 1])) // hole = next-smaller circle
+    return {
+      type: 'Feature' as const,
+      properties: { zone: EVAC_ZONES[i].zone, color: EVAC_ZONES[i].color },
+      geometry: { type: 'Polygon' as const, coordinates: rings },
+    }
+  })
+  return { type: 'FeatureCollection', features }
 }
 
 // --- Symbol paths. Aircraft around YFB (~[-68.556, 63.756]) + its SE approach;
