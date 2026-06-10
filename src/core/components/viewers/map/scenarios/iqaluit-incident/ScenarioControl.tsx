@@ -16,6 +16,8 @@ interface ScenarioControlProps {
   onEvacToggle: () => void
   bimOn: boolean
   onToggleBim: () => void
+  bimElevation: number             // metres; offset that seats the BIM on terrain
+  onBimElevationChange: (m: number) => void
 }
 
 const TEAL = '#0d9488'
@@ -27,6 +29,7 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
   playing, onPlayToggle, onRestart, onStop, playbackSpeed, onPlaybackSpeedChange,
   windBearing, windSpeed, onWindBearingChange, onWindSpeedChange,
   evacVisible, onEvacToggle, bimOn, onToggleBim,
+  bimElevation, onBimElevationChange,
 }) => {
   const dialRef = React.useRef<SVGSVGElement>(null)
   const dragging = React.useRef(false)
@@ -111,6 +114,17 @@ export const ScenarioControl: React.FC<ScenarioControlProps> = ({
           {bimOn ? '◉ BIM on' : '⬚ Load BIM'}
         </button>
       </div>
+
+      {bimOn && (
+        <div style={{ marginBottom: 11, fontSize: 12, color: '#64748b' }}>
+          <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>BIM elevation</span><span>{bimElevation} m</span>
+          </label>
+          <input type="range" min={-200} max={50} step={1} value={bimElevation}
+            onChange={e => onBimElevationChange(Number(e.target.value))}
+            style={{ width: '100%', accentColor: TEAL }} />
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <svg ref={dialRef} viewBox="0 0 100 100" width={92} height={92}
