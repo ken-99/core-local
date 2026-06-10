@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { interpAlong, advectParcel, WAREHOUSE, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS, bearingDeg, pathLengthKm, evacZoneCollection, EVAC_RADII_KM } from './scenario'
+import { interpAlong, advectParcel, INCIDENT_ORIGIN, MAX_PARCEL_AGE, flicker, smokeParcelCollection, symbolCollection, fireCollection, SYMBOLS, bearingDeg, pathLengthKm, evacZoneCollection, EVAC_RADII_KM } from './scenario'
 
 const PATH: [number, number][] = [
   [-68.56, 63.75],
@@ -35,7 +35,7 @@ describe('interpAlong', () => {
 describe('advectParcel', () => {
   it('drifts downwind: bearing 90° (east) increases longitude', () => {
     const { position } = advectParcel(20, 90, 20)
-    expect(position[0]).toBeGreaterThan(WAREHOUSE[0]) // east of the warehouse
+    expect(position[0]).toBeGreaterThan(INCIDENT_ORIGIN[0]) // east of the incident origin
   })
 
   it('older parcels travel farther from the warehouse', () => {
@@ -49,10 +49,10 @@ describe('advectParcel', () => {
     expect(advectParcel(MAX_PARCEL_AGE + 1, 90, 20).weight).toBe(0)
   })
 
-  it('a negative-age (not-yet-emitted) parcel has zero weight at the warehouse', () => {
+  it('a negative-age (not-yet-emitted) parcel has zero weight at the incident origin', () => {
     const p = advectParcel(-1, 90, 20)
     expect(p.weight).toBe(0)
-    expect(p.position).toEqual(WAREHOUSE)
+    expect(p.position).toEqual(INCIDENT_ORIGIN)
   })
 
   it('higher wind speed pushes a parcel farther for the same age', () => {
@@ -94,10 +94,10 @@ describe('collections', () => {
     }
   })
 
-  it('fireCollection is a single weighted point at the warehouse', () => {
+  it('fireCollection is a single weighted point at the incident origin', () => {
     const fc = fireCollection(0.5)
     expect(fc.features).toHaveLength(1)
-    expect(fc.features[0].geometry.coordinates).toEqual(WAREHOUSE)
+    expect(fc.features[0].geometry.coordinates).toEqual(INCIDENT_ORIGIN)
     expect(fc.features[0].properties!.weight).toBeGreaterThan(0)
   })
 })

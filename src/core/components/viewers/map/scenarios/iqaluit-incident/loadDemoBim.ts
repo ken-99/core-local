@@ -1,4 +1,5 @@
 import type { DbFile } from '../../../../../types/dbTypes'
+import { INCIDENT_ORIGIN } from './scenario'
 
 /**
  * Building whose uploaded .frag/.ifc model the demo loads onto the map. Set to a real
@@ -13,8 +14,8 @@ export const DEMO_BUILDING_ID: number | null = 3267
 /** Where the demo drops the real BIM model on the map — tuned in-browser. Just north
  *  of the warehouse, in the dock opening; rotated to align with the shoreline. */
 export const DEMO_BIM_PLACEMENT = {
-  lng: -68.5049729892321,
-  lat: 63.744153446098714,
+  lng: INCIDENT_ORIGIN[0],
+  lat: INCIDENT_ORIGIN[1],
   rotation: -90,
   elevation: 0,
 }
