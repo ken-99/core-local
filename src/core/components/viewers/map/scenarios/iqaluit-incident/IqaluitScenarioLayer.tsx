@@ -3,7 +3,7 @@ import * as React from 'react'
 import type maplibregl from 'maplibre-gl'
 import { Marker } from 'maplibre-gl'
 import {
-  WAREHOUSE, WAREHOUSE_FOOTPRINT,
+  INCIDENT_ORIGIN, WAREHOUSE_FOOTPRINT,
   symbolCollection, smokeParcelCollection, fireCollection, evacZoneCollection,
 } from './scenario'
 // Note: vessel loops were validated in water against OpenStreetMap coastline data
@@ -167,7 +167,7 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
       } as maplibregl.LayerSpecification)
     }
 
-    markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(WAREHOUSE).addTo(map)
+    markerRef.current = new Marker({ element: makeWindArrowEl() }).setLngLat(INCIDENT_ORIGIN).addTo(map)
 
     return () => {
       for (const id of [IDS.bimExtrudeLayer, IDS.evacFill, IDS.evacLine, IDS.warehouseLayer, IDS.smokeLayer, IDS.fireLayer, IDS.symLayer]) {

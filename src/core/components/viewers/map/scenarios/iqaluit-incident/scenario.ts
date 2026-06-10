@@ -23,6 +23,10 @@ const pointFC = (
 // --- Geography (seed values; tuned in-browser). Iqaluit / Frobisher Bay. ---
 export const IQALUIT_CENTER: Coord = [-68.52, 63.75]
 export const WAREHOUSE: Coord = [-68.508, 63.742] // sealift dock on the waterfront
+// Active incident origin: fire seat, smoke source, wind arrow + evac-ring centre.
+// Moved onto the loaded BIM building (just north, in the dock opening). Kept as the
+// single source of truth so DEMO_BIM_PLACEMENT and the incident stay locked together.
+export const INCIDENT_ORIGIN: Coord = [-68.5049729892321, 63.744153446098714]
 
 // Warehouse footprint (a small rectangle ~80 m across) as a static polygon.
 export const WAREHOUSE_FOOTPRINT: FeatureCollection<Polygon> = {
@@ -54,10 +58,10 @@ const EVAC_ZONES: { zone: string; color: string }[] = [
   { zone: 'green', color: '#22c55e' },
 ]
 
-/** Four concentric evacuation bands centered on the warehouse fire. */
+/** Four concentric evacuation bands centered on the incident origin. */
 export function evacZoneCollection(): FeatureCollection<Polygon> {
   const ringCoords = (km: number): Coord[] =>
-    circle(WAREHOUSE, km, { steps: 64, units: 'kilometers' })
+    circle(INCIDENT_ORIGIN, km, { steps: 64, units: 'kilometers' })
       .geometry.coordinates[0] as Coord[]
   const features = EVAC_RADII_KM.map((r, i) => {
     const rings: Coord[][] = [ringCoords(r)]
@@ -158,13 +162,13 @@ export interface Parcel {
  * knots. Lateral wander grows with age to read as billowing. Pure/deterministic.
  */
 export function advectParcel(age: number, windBearing: number, windSpeed: number): Parcel {
-  if (age < 0) return { position: WAREHOUSE, weight: 0, distanceKm: 0 }
+  if (age < 0) return { position: INCIDENT_ORIGIN, weight: 0, distanceKm: 0 }
   // drift per time-unit: ~0.04 km buoyancy base + 0.004 km per knot of wind
   const distanceKm = (0.04 + windSpeed * 0.004) * age
   // deterministic lateral wobble (no RNG) — small bearing oscillation, growing with age
   const wobbleDeg = Math.sin(age * 0.6) * 6 * Math.min(1, age / 20)
   const bearing = windBearing + wobbleDeg
-  const dest = destination(WAREHOUSE, distanceKm, bearing, { units: 'kilometers' })
+  const dest = destination(INCIDENT_ORIGIN, distanceKm, bearing, { units: 'kilometers' })
   const [lng, lat] = dest.geometry.coordinates as Coord
   const weight = Math.max(0, 1 - age / MAX_PARCEL_AGE)
   return { position: [lng, lat], weight, distanceKm }
@@ -213,7 +217,7 @@ export function smokeParcelCollection(
   return pointFC(features)
 }
 
-/** Single weighted fire point at the warehouse (weight = flicker). */
+/** Single weighted fire point at the incident origin (weight = flicker). */
 export function fireCollection(t: number): FeatureCollection<Point> {
-  return pointFC([{ coord: WAREHOUSE, props: { weight: flicker(t) } }])
+  return pointFC([{ coord: INCIDENT_ORIGIN, props: { weight: flicker(t) } }])
 }
