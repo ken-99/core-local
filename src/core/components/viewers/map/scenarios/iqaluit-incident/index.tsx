@@ -60,6 +60,26 @@ export const IqaluitScenarioDemo: React.FC<Props> = ({ map }) => {
     if (f) bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: f.name } })
   }, [bimDispatch])
 
+  // Dev tuning aid: live-seat the loaded BIM model from the console without a rebuild —
+  // run `__bimElev(-50)` etc. and watch it move (judge in MERCATOR; the globe/DTM altitude
+  // offset is buggy — see cdt-kp1-claude/notes/globe-bim-altitude-offset-bug.md). It re-adds
+  // the model so BimLayer re-captures the new elevation. Bake the winning value into
+  // DEMO_BIM_PLACEMENT.elevation. Cleared when BIM is toggled off / on unmount.
+  React.useEffect(() => {
+    if (!bimOn) return
+    const w = window as unknown as Record<string, unknown>
+    w.__bimElev = (e: number) => {
+      const f = bimFileRef.current
+      if (!f) { console.warn('[iqaluit-demo] no BIM model loaded'); return }
+      bimDispatch({ type: 'REMOVE_BIM_FROM_MAP', payload: { bimModelName: f.name } })
+      const nf: DbFile = { ...f, elevation: e }
+      bimFileRef.current = nf
+      bimDispatch({ type: 'TOGGLE_BIM_TO_MAP', payload: { buildingModel: { bimFile: nf, building: null } } })
+      console.info('[iqaluit-demo] BIM elevation =', e)
+    }
+    return () => { delete w.__bimElev }
+  }, [bimOn, bimDispatch])
+
   return (
     <>
       <ScenarioControl
