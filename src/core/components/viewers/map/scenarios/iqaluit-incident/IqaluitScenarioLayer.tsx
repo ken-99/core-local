@@ -125,10 +125,8 @@ export const IqaluitScenarioLayer: React.FC<Props> = ({ map, t, windBearing, win
         id: IDS.smokeLayer, type: 'heatmap', source: IDS.smokeSrc,
         paint: {
           'heatmap-weight': ['get', 'weight'],
-          // Ramp intensity + radius up with zoom so the plume stays a dense cloud when
-          // zoomed in (parcels spread apart on screen otherwise → patchy/transparent).
-          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, 1, 13, 1.3, 16, 2.4, 20, 3.5],
-          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 13, 60, 16, 210, 20, 700],
+          'heatmap-intensity': 1,
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 14, 13, 60],
           'heatmap-opacity': 0.75,
           'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
             0, 'rgba(120,120,120,0)',
