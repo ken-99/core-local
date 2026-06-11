@@ -48,4 +48,16 @@ describe('resolveBounds', () => {
     expect(resolveBounds(null, FALLBACK)).toBe(FALLBACK)
     expect(resolveBounds(undefined, FALLBACK)).toBe(FALLBACK)
   })
+
+  it('returns undefined (unbounded) when no fallback is given and input is invalid', () => {
+    expect(resolveBounds(undefined)).toBeUndefined()
+    expect(resolveBounds(null)).toBeUndefined()
+    expect(resolveBounds('')).toBeUndefined()
+    expect(resolveBounds([1, 2, 3])).toBeUndefined()
+  })
+
+  it('still returns valid bounds when no fallback is given', () => {
+    const flat = [-75, 45, -74, 46] as [number, number, number, number]
+    expect(resolveBounds(flat)).toBe(flat)
+  })
 })
