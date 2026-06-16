@@ -33,6 +33,7 @@ const initialState: InitialStateType = {
     mapHoverManager: null,
     dimensionsColour: '#ffffff',
     terrainLevel: 'medium',
+    showPoiIcons: true,
   },
 }
 

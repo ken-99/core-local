@@ -23,6 +23,15 @@ describe('MapReducer', () => {
     expect(MapReducer(base, { type: 'SET_CURSOR', payload: { cursor: 'pointer' } } as never).cursor).toBe('pointer')
   })
 
+  it('UPDATE_SHOW_POI_ICONS sets the flag', () => {
+    expect(
+      MapReducer(base, { type: 'UPDATE_SHOW_POI_ICONS', payload: { showPoiIcons: false } } as never).showPoiIcons,
+    ).toBe(false)
+    expect(
+      MapReducer({ ...base, showPoiIcons: false } as MapState, { type: 'UPDATE_SHOW_POI_ICONS', payload: { showPoiIcons: true } } as never).showPoiIcons,
+    ).toBe(true)
+  })
+
   it('ADD_LAYER appends only new layers (dedup)', () => {
     const s = MapReducer({ ...base, addedLayers: ['a'] }, { type: 'ADD_LAYER', payload: { addedLayers: ['a', 'b'] } } as never)
     expect(s.addedLayers).toEqual(['a', 'b'])

@@ -39,6 +39,7 @@ export interface MapTypes {
   mapHoverManager: MapHoverManager
   dimensionsColour: string;
   terrainLevel: TerrainLevel
+  showPoiIcons: boolean
 }
 
 export type MapState = MapTypes
@@ -66,6 +67,7 @@ export type MapPayload = {
   ['ADD_MAP_HOVER_MANAGER']: Pick<MapTypes, 'mapHoverManager'>
   ['UPDATE_DIMENSIONS_COLOUR']: Pick<MapTypes, 'dimensionsColour'>
   ['UPDATE_TERRAIN_LEVEL']: Pick<MapTypes, 'terrainLevel'>
+  ['UPDATE_SHOW_POI_ICONS']: Pick<MapTypes, 'showPoiIcons'>
 }
 
 export type MapActions = ActionMap<MapPayload>[keyof ActionMap<MapPayload>]
@@ -196,6 +198,11 @@ export const MapReducer = (state: MapState, action: MapActions) => {
       return {
         ...state,
         terrainLevel: action.payload.terrainLevel,
+      }
+    case 'UPDATE_SHOW_POI_ICONS':
+      return {
+        ...state,
+        showPoiIcons: action.payload.showPoiIcons,
       }
     default:
       return state
