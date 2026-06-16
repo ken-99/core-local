@@ -18,6 +18,7 @@ export enum MapLayerClickPriority {
   MartinLayerClickPriority = 300,
   OpenDataLayerClickPriority = 350,
   ShipTrafficClickPriority = 375,
+  AirTrafficClickPriority = 376,
   FileLayerCLickPriority = 400,
   BimModelLayerPriority = 600,
   ActiveTool = 1000, // SPECIAL ONE, MAKE SURE TO DISABLE THE TOOL WHEN YOU ARE FINISH.

@@ -4,6 +4,8 @@
 import type { PluginEntry, PluginManifest } from './sdk/types'
 import * as shipTraffic from './ship-traffic'
 import shipTrafficManifest from './ship-traffic/manifest.json'
+import * as airTraffic from './air-traffic'
+import airTrafficManifest from './air-traffic/manifest.json'
 
 /**
  * The plugins this app runs, in load order.
@@ -18,5 +20,9 @@ export const INSTALLED_PLUGINS: Array<{
   {
     manifest: shipTrafficManifest as PluginManifest,
     entry: shipTraffic,
+  },
+  {
+    manifest: airTrafficManifest as PluginManifest,
+    entry: airTraffic,
   },
 ]
