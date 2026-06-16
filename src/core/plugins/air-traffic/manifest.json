@@ -1,0 +1,14 @@
+{
+  "slug": "air-traffic",
+  "name": "Air Traffic",
+  "version": "0.1.0",
+  "description": "Renders live aircraft positions on the map (OpenSky Network)",
+  "author": "CDT Team",
+  "capabilities": ["map.tools", "map.legends"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
