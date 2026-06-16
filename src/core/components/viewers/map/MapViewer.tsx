@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation'
 
 import { MapContext } from '../../../store'
 import { resolveBounds } from './utils/validateBounds'
+import { registerPmtilesProtocol } from './utils/registerPmtilesProtocol'
 
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import DatasetManagerMenu from './datasets/DatasetManager'
@@ -18,6 +19,10 @@ import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
+
+// Register the pmtiles:// protocol so PMTiles basemaps can load. Runs once on
+// module load (this is a 'use client' module, so it only runs in the browser).
+registerPmtilesProtocol(maplibregl)
 
 const CANADA_DEFAULTS = {
   maxBounds: [-141.0, 41.6751050889, -52.6480987209, 83.23324] as LngLatBoundsLike,
