@@ -1,0 +1,14 @@
+{
+  "slug": "daynight-cycle",
+  "name": "Day/Night Cycle",
+  "version": "1.0.0",
+  "description": "Adds a day/night lighting cycle to the MapLibre map viewer",
+  "author": "CDT Team",
+  "capabilities": ["map.tools"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
