@@ -13,8 +13,8 @@ describe('BUILT_IN_MAP_STYLES — CDT Basemap entries', () => {
   it('points each CDT Basemap entry at its public MinIO style URL', () => {
     const light = BUILT_IN_MAP_STYLES.find(s => s.name === 'CDT Basemap (light)')
     const dark = BUILT_IN_MAP_STYLES.find(s => s.name === 'CDT Basemap (dark)')
-    expect(light?.url).toBe(`${PREFIX}/cdt-basemap-light.minio-ottawa.json`)
-    expect(dark?.url).toBe(`${PREFIX}/cdt-basemap-dark.minio-ottawa.json`)
+    expect(light?.url).toBe(`${PREFIX}/cdt-basemap-light.minio.json`)
+    expect(dark?.url).toBe(`${PREFIX}/cdt-basemap-dark.minio.json`)
   })
 
   it('keeps Satellite as the default (first) style', () => {
