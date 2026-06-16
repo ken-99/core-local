@@ -17,7 +17,13 @@ export function PoiIcons() {
   // (setStyle rebuilds all layers, so `styledata` is when the `poi` layer reappears).
   React.useEffect(() => {
     if (!map) return
-    const apply = () => setPoiIconsVisible(map, showPoiIcons)
+    const apply = () => {
+      try {
+        setPoiIconsVisible(map, showPoiIcons)
+      } catch {
+        // map may be mid-style-transition; the next styledata will re-apply
+      }
+    }
     if (map.isStyleLoaded()) apply()
     map.on('styledata', apply)
     return () => {
