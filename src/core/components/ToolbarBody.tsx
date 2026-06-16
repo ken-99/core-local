@@ -8,6 +8,10 @@ import { Menubar } from './ui/Menubar'
 import { Tool } from '../types/tools'
 import ToolbarButton from './ui/ToolbarButton'
 import { SubmenuProvider } from './ToolbarSubmenu'
+// Plugins
+import { MapContext } from '../store'
+import { usePluginRegistry } from '../plugins/host/provider'
+import type { ToolbarRegistration } from '../plugins/sdk/types'
 
 // Shared menubar wrapper used by the per-viewer toolbars (MapToolbar inline
 // in Toolbar.tsx, BimToolbar + PointCloudToolbar in their respective viewer
@@ -20,6 +24,17 @@ interface Props {
 }
 
 export function ToolbarBody({ viewer, tools }: Props) {
+  // Plugin-registered map tools render alongside the built-in tools, but only
+  // on the map viewer (that's the only surface that exposes a maplibre map).
+  const registry = usePluginRegistry()
+  const { state: mapState } = React.useContext(MapContext)
+  const map = mapState.map?.map ?? null
+
+  type PluginMapTool = ToolbarRegistration & { pluginId: string }
+  const pluginMapTools = viewer === 'map'
+    ? (registry.getAll('map.tools') as unknown as PluginMapTool[])
+    : []
+
   return (
     <div className="fixed left-1/2 transform -translate-x-1/2 bottom-[10px] flex items-center pointer-events-none z-10">
       <SubmenuProvider>
@@ -30,6 +45,11 @@ export function ToolbarBody({ viewer, tools }: Props) {
           {tools.map((tool, index) => (
             <div key={index} className="flex items-center">
               <ToolbarButton tool={tool} />
+            </div>
+          ))}
+          {pluginMapTools.map(entry => (
+            <div key={`plugin-${entry.pluginId}-${entry.id}`} className="flex items-center">
+              <entry.component map={map} />
             </div>
           ))}
         </Menubar>

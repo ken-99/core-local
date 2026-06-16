@@ -1,0 +1,14 @@
+{
+  "slug": "ship-traffic",
+  "name": "Ship Traffic",
+  "version": "0.1.0",
+  "description": "Renders live AIS ship traffic on the map (AISStream.io)",
+  "author": "CDT Team",
+  "capabilities": ["map.tools", "map.legends"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}

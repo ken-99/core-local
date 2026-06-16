@@ -65,11 +65,17 @@ export interface SidebarRegistration {
   component: React.ComponentType
 }
 
+// --- Map tool prop type ---
+
+export interface MapToolProps {
+  map: import('maplibre-gl').Map | null
+}
+
 export interface ToolbarRegistration {
   id: string
   label: string
   icon: string | React.ComponentType<LucideProps>
-  component: React.ComponentType<{ tool: unknown }>
+  component: React.ComponentType<MapToolProps>
   cursor?: string
   stayActive?: boolean
 }
