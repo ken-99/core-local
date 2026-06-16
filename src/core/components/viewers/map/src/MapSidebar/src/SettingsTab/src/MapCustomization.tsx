@@ -13,6 +13,7 @@ import { AppConfigContext, MapContext } from '../../../../../../../../store'
 import { TerrainLevel } from './TerrainLevel'
 import { buildMapStylesCatalog, resolveMapStyle } from '../../../../../utils/mapStyleCatalog'
 import { MapProjection } from './MapProjection'
+import { PoiIcons } from './PoiIcons'
 
 export function MapCustomization() {
   // Translation
@@ -70,6 +71,9 @@ export function MapCustomization() {
 
       {/* Map Projection */}
       <MapProjection />
+
+      {/* Points of interest (CDT basemap only) */}
+      <PoiIcons />
 
       {/* Dimensions Colour */}
       <div className="space-y-2">
