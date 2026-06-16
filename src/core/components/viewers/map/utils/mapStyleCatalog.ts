@@ -13,8 +13,8 @@ export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
   { name: 'Dark', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
   { name: 'Positron', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
   { name: 'Maplibre', url: 'https://demotiles.maplibre.org/style.json' },
-  { name: 'CDT Basemap (light)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-light.minio-ottawa.json' },
-  { name: 'CDT Basemap (dark)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-dark.minio-ottawa.json' },
+  { name: 'CDT Basemap (light)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-light.minio.json' },
+  { name: 'CDT Basemap (dark)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-dark.minio.json' },
 ]
 
 /**
