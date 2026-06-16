@@ -148,6 +148,7 @@
     "react-day-picker": "^9.8.0",
     "react-google-recaptcha": "^3.1.0",
     "recharts": "^3.7.0",
+    "suncalc": "^1.9.0",
     "tailwind-merge": "^3.2.0",
     "three-viewport-gizmo": "^2.2.0"
   },
@@ -170,6 +171,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-google-recaptcha": "^2.1.9",
+    "@types/suncalc": "^1.9.2",
     "@vitejs/plugin-react": "^6.0.2",
     "esbuild-plugin-preserve-directives": "^0.0.11",
     "eslint": "^9.32.0",

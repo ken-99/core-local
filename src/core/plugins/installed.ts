@@ -10,6 +10,8 @@ import * as publicTransit from './public-transit'
 import publicTransitManifest from './public-transit/manifest.json'
 import * as sentinelImagery from './sentinel-imagery'
 import sentinelImageryManifest from './sentinel-imagery/manifest.json'
+import * as daynightCycle from './daynight-cycle'
+import daynightCycleManifest from './daynight-cycle/manifest.json'
 
 /**
  * The plugins this app runs, in load order.
@@ -36,5 +38,9 @@ export const INSTALLED_PLUGINS: Array<{
   {
     manifest: sentinelImageryManifest as PluginManifest,
     entry: sentinelImagery,
+  },
+  {
+    manifest: daynightCycleManifest as PluginManifest,
+    entry: daynightCycle,
   },
 ]
