@@ -1,0 +1,14 @@
+{
+  "slug": "public-transit",
+  "name": "Public Transit",
+  "version": "0.1.0",
+  "description": "Renders live public-transit vehicles for London (TfL) and Helsinki (HSL)",
+  "author": "CDT Team",
+  "capabilities": ["map.tools", "map.legends"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
