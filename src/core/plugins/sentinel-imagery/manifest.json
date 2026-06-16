@@ -1,0 +1,14 @@
+{
+  "slug": "sentinel-imagery",
+  "name": "Sentinel-2 Imagery",
+  "version": "0.1.0",
+  "description": "Overlays the EOX s2cloudless Sentinel-2 cloudless mosaic (2022) on the map with city presets for Vancouver, Toronto, and Montreal",
+  "author": "CDT Team",
+  "capabilities": ["map.tools"],
+  "requiredPermissions": [],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}

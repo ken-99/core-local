@@ -133,6 +133,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dxf-viewer": "^1.0.42",
+    "gtfs-realtime-bindings": "1.1.1",
     "jspdf": "^4.2.1",
     "maplibre-gl-measures": "^0.0.16",
     "memjs": "^1.3.2",
