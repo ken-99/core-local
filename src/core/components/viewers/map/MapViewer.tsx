@@ -18,6 +18,7 @@ import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
+import { HalifaxTowersDemo } from './demos/halifax-lod2-towers'
 import SettingsButton from '../../ui/SettingsButton'
 
 // Register the pmtiles:// protocol so PMTiles basemaps can load. Runs once on
@@ -211,6 +212,7 @@ export function MapViewer({ width = '100%', height = '100%', organization }: Pro
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
+                <HalifaxTowersDemo />
                 <MapLegendHost />
                 <DatasetManagerMenu />
               </div>
