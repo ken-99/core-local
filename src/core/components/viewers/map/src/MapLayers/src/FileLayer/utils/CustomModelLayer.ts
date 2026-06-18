@@ -138,6 +138,18 @@ export const CustomModelLayer = (
             if (disposed) return
             gltf.scene.scale.setScalar(1)
 
+            // Render both faces. Reconstructed/CityJSON-derived meshes (e.g. the
+            // Halifax LoD2.2 towers) aren't a closed manifold, so single-sided
+            // materials leave back-facing roof/wall facets unlit (they read as
+            // black "broken" gaps). Double-siding is harmless for solid models
+            // viewed from outside and fixes that.
+            gltf.scene.traverse((obj) => {
+              const mesh = obj as THREE.Mesh
+              if (!mesh.isMesh) return
+              const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+              for (const m of mats) { if (m) (m as THREE.Material).side = THREE.DoubleSide }
+            })
+
             if (gltf.animations && gltf.animations.length > 0) {
               this.mixer = new THREE.AnimationMixer(gltf.scene)
               for (const clip of gltf.animations) {
