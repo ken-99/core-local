@@ -22,7 +22,7 @@ import type { DbFile } from '../../../../../types/dbTypes'
 const TOWERS = {
   id: 'halifax-lod2-towers',
   name: 'halifax-lod2-towers',
-  url: '/demo/halifax-towers.glb?v=lod13',
+  url: '/demo/halifax-towers.glb?v=pitched2',
   extension: 'glb',
   lng: -63.5634042,
   lat: 44.6892358,
