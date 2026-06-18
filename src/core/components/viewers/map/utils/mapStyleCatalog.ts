@@ -15,6 +15,7 @@ export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
   { name: 'Maplibre', url: 'https://demotiles.maplibre.org/style.json' },
   { name: 'CDT Basemap (light)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-light.minio.json' },
   { name: 'CDT Basemap (dark)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-dark.minio.json' },
+  { name: 'CDT Basemap (swisstopo)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-swisstopo.json' },
 ]
 
 /**
