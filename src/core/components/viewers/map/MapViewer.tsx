@@ -12,6 +12,8 @@ import { useSearchParams } from 'next/navigation'
 import { MapContext } from '../../../store'
 import { resolveBounds } from './utils/validateBounds'
 import { registerPmtilesProtocol } from './utils/registerPmtilesProtocol'
+import { enforceMercatorPastZoom, MAX_GLOBE_ZOOM } from './utils/enforceMapProjection'
+import { clearStaleTerrain } from './utils/clearStaleTerrain'
 
 import { MapClickManager } from './utils/MapEventManager/MapClickManager'
 import DatasetManagerMenu from './datasets/DatasetManager'
@@ -34,7 +36,6 @@ const CANADA_DEFAULTS = {
 } as const
 
 const DEFAULT_MAP_STYLE = { name: 'Satellite', url: 'mapStyles/satellite.json' } as const
-const MAX_GLOBE_ZOOM = 5
 
 interface Props {
   width?: string
@@ -95,25 +96,25 @@ export function MapViewer({ width = '100%', height = '100%', organization, minio
   React.useEffect(() => {
     if (!activeMap) return
 
-    const enforceProjectionForZoom = () => {
-      if (activeMap.getZoom() <= MAX_GLOBE_ZOOM) return
+    const enforceProjection = () => enforceMercatorPastZoom(activeMap, MAX_GLOBE_ZOOM)
 
-      const projection = activeMap.getProjection()
-      const currentType =
-        typeof projection === 'string'
-          ? projection
-          : (projection as { type?: string; name?: string })?.type ?? (projection as { type?: string; name?: string })?.name
-
-      if (currentType !== 'mercator') {
-        activeMap.setProjection({ type: 'mercator' })
-      }
+    // On a style change, re-apply two guards before the map renders the new style:
+    //  - projection: a style with no `projection` resets MapLibre 5.x to globe,
+    //    which would strand the map in globe past MAX_GLOBE_ZOOM and freeze it.
+    //  - terrain: terrain left pointing at a source the new style dropped crashes
+    //    MapLibre's terrain depth pass. Clearing it here avoids that crash.
+    const onStyleData = () => {
+      enforceProjection()
+      clearStaleTerrain(activeMap)
     }
 
-    enforceProjectionForZoom()
-    activeMap.on('zoom', enforceProjectionForZoom)
+    enforceProjection()
+    activeMap.on('zoom', enforceProjection)
+    activeMap.on('styledata', onStyleData)
 
     return () => {
-      activeMap.off('zoom', enforceProjectionForZoom)
+      activeMap.off('zoom', enforceProjection)
+      activeMap.off('styledata', onStyleData)
     }
   }, [activeMap])
 

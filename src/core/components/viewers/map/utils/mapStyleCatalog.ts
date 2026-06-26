@@ -16,6 +16,9 @@ export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
   { name: 'CDT Basemap (light)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-light.minio.json' },
   { name: 'CDT Basemap (dark)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-dark.minio.json' },
   { name: 'CDT Basemap (swisstopo)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-swisstopo.json' },
+  { name: 'CDT Basemap (USGS Quad)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-usgs-quad.json' },
+  { name: 'CDT Basemap (Bartholomew)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-bartholomew.json' },
+  { name: 'CDT Basemap (OS Landranger)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-os-landranger.json' },
 ]
 
 /**
