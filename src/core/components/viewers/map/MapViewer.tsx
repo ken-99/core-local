@@ -21,7 +21,7 @@ import { MapLegendHost } from './legends/MapLegendHost'
 import { StatsOverlay } from '../../ui/stats'
 import { MapHoverManager } from './utils/MapEventManager/MapHoverManager'
 import { Organization } from '../../../types/dbTypes'
-import { CurrentLocation } from '../../../types/map'
+import { CurrentLocation, MapStyle } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
 
@@ -35,7 +35,7 @@ const CANADA_DEFAULTS = {
   long: -98.74,
 } as const
 
-const DEFAULT_MAP_STYLE = { name: 'Satellite', url: 'mapStyles/satellite.json' } as const
+const DEFAULT_MAP_STYLE: MapStyle = { name: 'Satellite', url: 'mapStyles/satellite.json' }
 
 interface Props {
   width?: string
@@ -186,6 +186,17 @@ export function MapViewer({ width = '100%', height = '100%', organization, minio
   }, [])
 
   const mapStyle = mapState?.map.mapStyle ?? DEFAULT_MAP_STYLE;
+
+  // Some styles only have data over one region (e.g. bathymetry tiled for the
+  // Salish Sea). When such a style is selected, fly the camera to its target so
+  // the user lands on the data instead of empty ocean. Keyed on the style URL so
+  // it runs once per style change, not on every render.
+  React.useEffect(() => {
+    if (!activeMap) return
+    const target = mapStyle?.flyTo
+    if (!target) return
+    activeMap.flyTo({ center: target.center, zoom: target.zoom })
+  }, [activeMap, mapStyle?.url])
 
   return (
     <>
