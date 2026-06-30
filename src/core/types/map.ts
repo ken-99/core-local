@@ -8,6 +8,12 @@ import { Feature } from 'geojson'
 export interface MapStyle {
   name: string
   url: string
+  /**
+   * Optional camera target. When a style only has data over a specific area
+   * (e.g. bathymetry tiled for one region), selecting it flies the map here so
+   * the user lands on the data instead of empty ocean.
+   */
+  flyTo?: { center: [number, number]; zoom: number }
 }
 export interface LngLat {
   lng?: number
