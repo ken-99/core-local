@@ -19,6 +19,12 @@ export const BUILT_IN_MAP_STYLES: MapStyle[]  = [
   { name: 'CDT Basemap (USGS Quad)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-usgs-quad.json' },
   { name: 'CDT Basemap (Bartholomew)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-bartholomew.json' },
   { name: 'CDT Basemap (OS Landranger)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-os-landranger.json' },
+  { name: 'CDT Basemap (cmocean Deep)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-cmocean-deep.json' },
+  { name: 'CDT Basemap (cmocean Thermal)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-cmocean-thermal.json' },
+  { name: 'CDT Basemap (GEBCO Bathymetric)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-gebco.json' },
+  { name: 'CDT Basemap (Topobathy)', url: 'https://cdtminiodevcluster.ca-east.onfullhost.cloud/pointclouds-demo/cdt-basemap-test-v1/cdt-basemap-topobathy.json' },
+  // Temporary stand-in: live GEBCO bathymetry via WMS while the bathy PMTiles are uploaded. App-hosted style, no MinIO/API key needed.
+  { name: 'CDT Bathymetry (GEBCO WMS)', url: '/mapStyles/cdt-bathy-gebco-wms.json' },
 ]
 
 /**
