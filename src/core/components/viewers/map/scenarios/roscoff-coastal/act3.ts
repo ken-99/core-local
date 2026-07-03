@@ -56,6 +56,22 @@ export function latest(series: TidePoint[]): TidePoint | null {
   return series.length ? series[series.length - 1] : null
 }
 
+/**
+ * The highest water level over the most recent `windowMs` of a series — the
+ * recent high-water mark. Storm-surge flooding happens at high tide, so the
+ * exposure scenario stacks the simulated surge on THIS rather than the live
+ * level (which is usually mid- or low-tide and would flood nothing). The
+ * default window (~25 h) spans about two tidal cycles, so it captures the
+ * current spring/neap high water rather than a week-old spring peak.
+ */
+export function recentHighWater(series: TidePoint[], windowMs = 25 * 3_600_000): number | null {
+  if (!series.length) return null
+  const cutoff = series[series.length - 1].t - windowMs
+  let hi = -Infinity
+  for (const p of series) if (p.t >= cutoff && p.v > hi) hi = p.v
+  return hi === -Infinity ? null : hi
+}
+
 /** Chart-datum water level (m) → height relative to IGN69 (m). IGN69 zero sits
  * `latBelowIgn69_m` ABOVE chart-datum zero, so a level L above chart datum is
  * L − offset relative to IGN69. Declared offset (illustrative until BATHYELLI). */

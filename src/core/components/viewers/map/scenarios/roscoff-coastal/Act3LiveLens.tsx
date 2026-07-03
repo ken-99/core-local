@@ -4,7 +4,7 @@ import type maplibregl from 'maplibre-gl'
 import { Act3Panel } from './Act3Panel'
 import { Act3LiveLensLayer } from './Act3LiveLensLayer'
 import { useRoscoffTide } from './useRoscoffTide'
-import { HARBOUR_VIEW, exposure as computeExposure } from './act3'
+import { HARBOUR_VIEW, exposure as computeExposure, recentHighWater } from './act3'
 
 interface Props { map: maplibregl.Map }
 
@@ -21,12 +21,16 @@ export const Act3LiveLens: React.FC<Props> = ({ map }) => {
     map.flyTo({ center: HARBOUR_VIEW.center, zoom: HARBOUR_VIEW.zoom })
   }, [map])
 
-  const level = tide.currentObserved?.v ?? 0
+  // Flooding happens at high tide, so evaluate exposure at the recent high-water
+  // mark plus the simulated surge (not the live level, which is usually low/mid
+  // tide and would flood nothing — see recentHighWater).
+  const highWater = recentHighWater(tide.observed)
+  const level = highWater ?? 0
   const exposure = React.useMemo(() => computeExposure(level, surge), [level, surge])
 
   return (
     <>
-      <Act3Panel tide={tide} surge={surge} onSurgeChange={setSurge} exposure={exposure} />
+      <Act3Panel tide={tide} surge={surge} onSurgeChange={setSurge} exposure={exposure} highWaterM={highWater} />
       <Act3LiveLensLayer map={map} exposure={exposure} />
     </>
   )

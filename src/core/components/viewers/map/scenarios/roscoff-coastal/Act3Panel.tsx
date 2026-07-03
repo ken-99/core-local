@@ -8,6 +8,8 @@ interface Props {
   surge: number
   onSurgeChange: (m: number) => void
   exposure: ExposureResult[]
+  /** Recent high-water level (chart datum m) the surge scenario stacks on. */
+  highWaterM: number | null
 }
 
 const TEAL = '#0d9488'
@@ -34,7 +36,7 @@ const ResidualSparkline: React.FC<{ values: number[] }> = ({ values }) => {
 const fmt = (v: number | null | undefined, unit = ' m') =>
   v == null ? '—' : `${v >= 0 ? '' : '−'}${Math.abs(v).toFixed(2)}${unit}`
 
-export const Act3Panel: React.FC<Props> = ({ tide, surge, onSurgeChange, exposure }) => {
+export const Act3Panel: React.FC<Props> = ({ tide, surge, onSurgeChange, exposure, highWaterM }) => {
   const { currentObserved, currentPredicted, residual, loading, error, lastFetched } = tide
   const obs = currentObserved?.v ?? null
   const surgeNow = obs != null && currentPredicted != null ? obs - currentPredicted : null
@@ -52,7 +54,7 @@ export const Act3Panel: React.FC<Props> = ({ tide, surge, onSurgeChange, exposur
         Act 3 — the twin as a live lens
       </div>
       <div style={{ color: '#64748b', fontSize: 12, marginBottom: 9 }}>
-        Roscoff tide gauge (REFMAR 54), live. Residual = observed − predicted = the storm-surge signal.
+        Roscoff tide gauge (REFMAR 54), live. Predicted = harmonic tide fit from the gauge&apos;s own record; residual = observed − predicted = the non-tidal surge.
       </div>
 
       {error && <div style={{ color: '#b91c1c', fontSize: 11, marginBottom: 8 }}>Feed error: {error}</div>}
@@ -70,7 +72,7 @@ export const Act3Panel: React.FC<Props> = ({ tide, surge, onSurgeChange, exposur
       <ResidualSparkline values={residual.map(r => r.residual)} />
 
       <div style={{ margin: '10px 0 4px', fontSize: 12, color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Simulated surge</span><span>+{surge.toFixed(1)} m</span>
+        <span>Simulated surge on high water</span><span>+{surge.toFixed(1)} m</span>
       </div>
       <input type="range" min={0} max={3} step={0.1} value={surge}
         onChange={e => onSurgeChange(Number(e.target.value))}
@@ -78,7 +80,7 @@ export const Act3Panel: React.FC<Props> = ({ tide, surge, onSurgeChange, exposur
 
       <div style={{ borderTop: '1px solid #e2e8f0', marginTop: 9, paddingTop: 8, fontSize: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#334155' }}>Exposed structures</span>
+          <span style={{ color: '#334155' }}>Exposed at high water{highWaterM != null ? ` ≈ ${highWaterM.toFixed(1)} m` : ''}</span>
           <b style={{ color: exposedCount ? '#dc2626' : '#16a34a' }}>{exposedCount} / {exposure.length}</b>
         </div>
         <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 11, color: '#334155' }}>

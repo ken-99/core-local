@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseFlux, residualSeries, chartDatumToIgn69, exposure, fluxUrl, latest } from './act3'
+import { parseFlux, residualSeries, chartDatumToIgn69, exposure, fluxUrl, latest, recentHighWater } from './act3'
 import { DECLARED_OFFSETS } from './act1'
 
 describe('parseFlux', () => {
@@ -58,6 +58,24 @@ describe('exposure', () => {
     const calm = exposure(8, 0).filter(r => r.exposed).length
     const surge = exposure(8, 1.5).filter(r => r.exposed).length
     expect(surge).toBeGreaterThanOrEqual(calm)
+  })
+})
+
+describe('recentHighWater', () => {
+  const t0 = Date.parse('2026-07-03T00:00:00Z')
+  it('returns the highest level within the recent window', () => {
+    const s = [
+      { t: t0, v: 2.1 }, { t: t0 + 6 * 3_600_000, v: 8.3 }, { t: t0 + 12 * 3_600_000, v: 2.7 },
+    ]
+    expect(recentHighWater(s)).toBeCloseTo(8.3)
+  })
+  it('ignores peaks older than the window', () => {
+    const last = t0 + 30 * 3_600_000
+    const s = [{ t: t0, v: 9.9 }, { t: last, v: 3.0 }] // 9.9 is >25h before the last point
+    expect(recentHighWater(s)).toBeCloseTo(3.0)
+  })
+  it('returns null for an empty series', () => {
+    expect(recentHighWater([])).toBeNull()
   })
 })
 
