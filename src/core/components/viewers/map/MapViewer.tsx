@@ -24,6 +24,7 @@ import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation, MapStyle } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
+import { RoscoffCoastalDemo } from './scenarios/roscoff-coastal'
 
 // Register the pmtiles:// protocol so PMTiles basemaps can load. Runs once on
 // module load (this is a 'use client' module, so it only runs in the browser).
@@ -228,6 +229,10 @@ export function MapViewer({ width = '100%', height = '100%', organization }: Pro
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
                 <MapLegendHost />
                 <DatasetManagerMenu />
+                {/* Dev-only demo scenario (self-contained; mercator only). */}
+                {process.env.NODE_ENV === 'development' && activeMap && (
+                  <RoscoffCoastalDemo map={activeMap as maplibregl.Map} />
+                )}
               </div>
             </>
           )}

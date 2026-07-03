@@ -44,6 +44,11 @@ Sovereign source data stays immutable; datum shifts are declared, reversible, lo
 ## Status
 - [x] Pre-checks P1–P8 (Roscoff): Acts 1 + 3 buildable now; Act 2 needs Litto3D/BATHYELLI download + point-tiler-rust.
 - [x] Phase 0: branch `demo/roscoff-coastal` (off `feature/pmtiles-planet-basemap`) + scaffold.
-- [ ] Phase 1: Act 1 federation scene.
+- [~] Phase 1: Act 1 federation scene — CODE DONE, browser check pending (auth-gated, Jon).
+  - EMODnet mean-bathymetry draped as a WMS raster (mercator tiles); median line + SHOM/UKHO survey footprints (toggle); click any seabed point → popup with the same depth in four datums (EMODnet LAT = real via GetFeatureInfo; IGN69/ODN + ellipsoid via declared offsets).
+  - `act1.ts` pure math unit-tested (6/6); `yarn build:types` clean at baseline 13.
+  - Mounted dev-only in `MapViewer.tsx` (bottom-left stack, `NODE_ENV==='development'`).
+  - Known: declared datum offsets are illustrative (swap for BATHYELLI + RAF geoid in Act 2); the popup fires on any map click (raster layers aren't feature-queryable) so it coexists with the app's click manager.
+  - **To see it:** rebuild core from this branch into the app (`yarn dev:linked`), open the map in dev.
 - [ ] Phase 4: Act 3 live gauge connector.
 - [ ] Phase 2+3: Act 2 point cloud + buildings + tidal animation.
