@@ -3,7 +3,7 @@ import * as React from 'react'
 import type maplibregl from 'maplibre-gl'
 import { Popup } from 'maplibre-gl'
 import { EMODNET_WMS } from './constants'
-import { MEDIAN_LINE, SURVEY_FOOTPRINTS, datumRows, sideOfMedian, lngLatToMerc, DECLARED_OFFSETS } from './act1'
+import { MEDIAN_LINE, SURVEY_FOOTPRINTS, datumRows, sideOfMedian, lngLatToMerc, DECLARED_OFFSETS, CHANNEL_VIEW } from './act1'
 
 interface Props {
   map: maplibregl.Map
@@ -74,6 +74,7 @@ export const Act1FederationLayer: React.FC<Props> = ({ map, footprintsVisible })
   // Add sources + layers once; clean up on unmount.
   React.useEffect(() => {
     if (!map) return
+    map.flyTo({ center: CHANNEL_VIEW.center, zoom: CHANNEL_VIEW.zoom })
     if (!map.getSource(IDS.emodSrc)) {
       map.addSource(IDS.emodSrc, { type: 'raster', tiles: [emodnetTileUrl()], tileSize: 256,
         attribution: EMODNET_WMS.attribution })
