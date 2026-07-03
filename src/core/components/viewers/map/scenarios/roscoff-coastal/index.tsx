@@ -1,23 +1,38 @@
 'use client'
 import * as React from 'react'
 import type maplibregl from 'maplibre-gl'
-import { ROSCOFF_VIEW } from './constants'
+import { Act1Control } from './Act1Control'
+import { Act1FederationLayer } from './Act1FederationLayer'
+import { CHANNEL_VIEW } from './act1'
 
 interface Props { map: maplibregl.Map }
 
 /**
  * Roscoff coastal digital-twin demo — self-contained scenario module
- * (mirrors `iqaluit-incident`). Mounted dev-only from MapViewer.
+ * (mirrors `iqaluit-incident`). Mounted dev-only from MapViewer, inside the
+ * bottom-left overlay stack so its control card stacks with the others.
  *
- * SCAFFOLD (Phase 0): flies the camera to the AOI on mount, renders no layers
- * yet. Act 1 (federation scene), Act 3 (live gauge), Act 2 (point cloud + tidal
- * animation) land in later phases. Mercator only — never set projection here.
+ * Act 1 (this phase): the Channel as a federation problem — EMODnet bathymetry
+ * draped Channel-wide, median line + national survey footprints, and a click
+ * popup showing one seabed point across four vertical datums. Acts 2–3 (point
+ * cloud + tidal animation, live gauge) land in later phases. Mercator only.
  */
 export const RoscoffCoastalDemo: React.FC<Props> = ({ map }) => {
+  const [footprintsVisible, setFootprintsVisible] = React.useState(true)
+
+  // Fly to the Channel-wide view for Act 1 on mount.
   React.useEffect(() => {
-    map.flyTo({ center: ROSCOFF_VIEW.center, zoom: ROSCOFF_VIEW.zoom })
+    map.flyTo({ center: CHANNEL_VIEW.center, zoom: CHANNEL_VIEW.zoom })
   }, [map])
 
-  return null
+  return (
+    <>
+      <Act1Control
+        footprintsVisible={footprintsVisible}
+        onToggleFootprints={() => setFootprintsVisible(v => !v)}
+      />
+      <Act1FederationLayer map={map} footprintsVisible={footprintsVisible} />
+    </>
+  )
 }
 RoscoffCoastalDemo.displayName = 'RoscoffCoastalDemo'
