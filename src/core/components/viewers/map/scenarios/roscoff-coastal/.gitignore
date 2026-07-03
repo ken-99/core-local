@@ -1,0 +1,10 @@
+# Downloaded source data (LiDAR HD / Litto3D tiles, BATHYELLI, ortho) and
+# pipeline intermediates — never commit. Produced once, federated/hosted.
+data/
+*.laz
+*.copc.laz
+*.las
+*.tif
+*.tiff
+*.city.json
+*.city.jsonl
