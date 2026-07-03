@@ -36,6 +36,12 @@ Sovereign source data stays immutable; datum shifts are declared, reversible, lo
 - Never sweep `authorizeCredentials.ts` or secrets into commits; `data/` is gitignored.
 - Every ingested layer records source CRS (h+v), transform chain, acquisition date, licence, attribution. Cite REFMAR per its DOI.
 
+## Future option — Roscoff seabed basemap (CDT-native, from the MinIO briefing)
+There is a documented, reusable pipeline (briefing at MinIO `pointclouds-demo/cdt-basemap-test-v1/cdt-basemaps-demo-briefing.md`; build repos `g:\cdt-vector-basemap` + `G:\pmtiles-basemap`, NOT reachable from this machine) that already produced self-hosted seabed basemaps for **Salish Sea (GEBCO)** and **Halifax (CHS NONNA 10 m)** — depth polygons + isobaths + terrarium DEM as PMTiles, served from the same public MinIO bucket via `pmtiles://`, styled by the existing `topobathy`/`gebco`/`cmocean-deep` ocean styles (already in `mapStyleCatalog.ts`).
+- **Recipe (Docker):** depth raster → `gdal_calc`/`gdal_polygonize` (bands 0/10/20/50/100/200 m) + `gdal_contour` (isobaths) → `felt/tippecanoe` (layers `depth,isobath,coastline,water_label,graticule`) → `protomaps/go-pmtiles`; terrarium DEM via `gdal_translate -of MBTILES` + nearest overviews → pmtiles.
+- **For Roscoff:** depth source = EMODnet or GEBCO (NONNA is Canada-only). Build a `cdt-bathy-roscoff.pmtiles` + DEM, `make_bathy_minio_style.py`-style-substitute an ocean style to it, fly to the AOI.
+- **DECISION (2026-07-02): NOT now.** Act 1 keeps the live EMODnet **WMS drape** (works, no build). Revisit to make Act 1 a sharp CDT-native seabed basemap. **Blocker:** publish step needs MinIO S3 upload creds (rclone `.env`) — same as the SHOM downloads; or host the pmtiles in the app `public/` for local dev.
+
 ## Environment gaps (close before Act 2)
 - `pdal` not installed locally → run via `pdal/pdal` Docker image (works; used for P3).
 - `point-tiler-rust` + `cargo` missing → install Rust + build, or obtain a binary, for OGC 3D Tiles output.
