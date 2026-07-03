@@ -50,5 +50,11 @@ Sovereign source data stays immutable; datum shifts are declared, reversible, lo
   - Mounted dev-only in `MapViewer.tsx` (bottom-left stack, `NODE_ENV==='development'`).
   - Known: declared datum offsets are illustrative (swap for BATHYELLI + RAF geoid in Act 2); the popup fires on any map click (raster layers aren't feature-queryable) so it coexists with the app's click manager.
   - **To see it:** rebuild core from this branch into the app (`yarn dev:linked`), open the map in dev.
-- [ ] Phase 4: Act 3 live gauge connector.
+- [~] Phase 4: Act 3 live lens — CODE DONE, browser check pending (auth-gated, Jon).
+  - Live REFMAR gauge 54 (client-side, CORS-open): observed (source 1) + predicted (source 2), 7-day window, polled every 5 min (no reload).
+  - Panel: current observed/predicted/surge tiles + a 7-day residual (surge) sparkline + a simulated-surge slider.
+  - Map: gauge marker, harbour water fill, quayside exposure points that recolor (red=exposed/green=dry) with level+surge; click → margin popup.
+  - Act switcher (Act 1 · Channel / Act 3 · Live gauge) — one act mounted at a time so layers never clash; each flies its own camera.
+  - `act3.ts` + `useRoscoffTide.ts` logic; tests 15/15 total; `build:types` clean at baseline 13.
+  - Deferred to production/Act 2: server-side connector + TimescaleDB persistence (not needed for the demo — feed is open/keyless); real exposure on roofer buildings (thresholds are illustrative now).
 - [ ] Phase 2+3: Act 2 point cloud + buildings + tidal animation.
