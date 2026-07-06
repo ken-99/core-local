@@ -114,7 +114,9 @@ export const CustomModelLayer = (
 
         // Lighting to match OBC library setup
         scene.background = null
-        scene.fog = new THREE.Fog(0x20_29_32, 10, 200)
+        // No fog: models sit over a bright basemap and can span a whole
+        // town (Act 2 Roscoff is ~1-2 km), so the old 200 m dark fog faded
+        // every distant building to near-black. Ambient can't undo fog.
         scene.add(new THREE.AmbientLight(0xFF_FF_FF, 1))
         scene.add(new THREE.HemisphereLight(0xFF_FF_BB, 0x08_08_20, 0.5))
 
@@ -140,6 +142,15 @@ export const CustomModelLayer = (
             // dead scene; let the gltf be GC'd (no GPU upload happened yet).
             if (disposed) return
             gltf.scene.scale.setScalar(1)
+
+            // Render both faces so back-facing facets aren't lit black — roofer
+            // LOD2.2 meshes have mixed winding, which otherwise leaves whole
+            // walls/roofs dark from certain angles.
+            gltf.scene.traverse((obj) => {
+              const mat = (obj as THREE.Mesh).material
+              if (!mat) return
+              for (const m of Array.isArray(mat) ? mat : [mat]) m.side = THREE.DoubleSide
+            })
 
             if (gltf.animations && gltf.animations.length > 0) {
               this.mixer = new THREE.AnimationMixer(gltf.scene)

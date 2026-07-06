@@ -74,6 +74,38 @@ export const LIDAR_HD = {
   attribution: 'IGN — LiDAR HD (Licence Ouverte / Etalab 2.0)',
 } as const
 
+/**
+ * Act 2 buildings — roofer LOD2.2 reconstruction of the Roscoff harbour + old
+ * town from the open IGN LiDAR HD tile 0187_6870 (13.08 pts/m²), reconstructed
+ * against 514 BD TOPO footprints → 403 LOD2.2 buildings, baked to one glb.
+ *
+ * Values are deterministic build outputs of
+ * `scripts/build_buildings_glb.py` (see data/output/placement.json). The glb is
+ * Y-up local metres, base at y=0; placed at lng/lat via CustomModelLayer.
+ * Vertical zero (y=0) = IGN69 ground_z below; the map has no terrain in this
+ * scene, so `elevation` seats it against the flat basemap (illustrative until
+ * BATHYELLI gives the real chart-datum↔ellipsoid separation).
+ */
+export const ROSCOFF_BUILDINGS = {
+  // ?v bumps whenever the baked glb changes so the browser can't serve a stale
+  // cached copy (the file is a static asset, nearly the same size each rebuild).
+  url: '/demo/roscoff-buildings.glb?v=2',
+  lng: -3.9744781,
+  lat: 48.7220927,
+  groundZIgn69: -1.14,
+  count: 403,
+  source: 'IGN LiDAR HD (Etalab 2.0) → roofer LOD2.2; footprints © IGN BD TOPO',
+} as const
+
+/** Close-up camera for Act 2 (must be ≥ 15.5 zoom or CustomModelLayer won't draw). */
+export const ROSCOFF_CLOSEUP_VIEW = { center: ROSCOFF_CENTER, zoom: 16.5, pitch: 55, bearing: -20 } as const
+
+/** IGN BD ORTHO aerial imagery as XYZ raster tiles (WMTS PM = web mercator). */
+export const BDORTHO_TILE_URL =
+  'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
+  + '&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIXSET=PM&STYLE=normal&FORMAT=image/jpeg'
+  + '&TILEMATRIX={z}&TILECOL={x}&TILEROW={y}'
+
 /** SHOM products that need a (free) account download — Jon's manual step for Act 2. */
 export const SHOM_ACCOUNT_GATED = {
   litto3dRegion: 'LITTO3D Finistère 2014',

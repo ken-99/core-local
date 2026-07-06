@@ -63,4 +63,7 @@ There is a documented, reusable pipeline (briefing at MinIO `pointclouds-demo/cd
   - Act switcher (Act 1 · Channel / Act 3 · Live gauge) — one act mounted at a time so layers never clash; each flies its own camera.
   - `act3.ts` + `useRoscoffTide.ts` logic; tests 15/15 total; `build:types` clean at baseline 13.
   - Deferred to production/Act 2: server-side connector + TimescaleDB persistence (not needed for the demo — feed is open/keyless); real exposure on roofer buildings (thresholds are illustrative now).
-- [ ] Phase 2+3: Act 2 point cloud + buildings + tidal animation.
+- [~] Phase 2+3: Act 2 — the living shoreline.
+  - **Buildings DONE + browser-checked (Jon):** 403 roofer LOD2.2 buildings from the open IGN LiDAR HD tile 0187_6870, baked to one glb (`scripts/build_buildings_glb.py`) and placed via `CustomModelLayer`, draped on IGN BD ORTHO aerial imagery. Act switcher gains "Act 2 · Shoreline"; control card has an aerial-drape toggle + seat-height slider + legend.
+  - Bugs fixed this pass: glb had no material → viewers defaulted to metallic (faces lit black) → script now bakes a matte PBR material; each building is flattened to its OWN base (y=0) so the sloped town sits flat on the terrain-less scene; removed the shared `CustomModelLayer` 200 m dark fog that faded distant buildings to near-black. Default seat 0 (illustrative until BATHYELLI).
+  - **Still TODO:** point cloud (colorized IGN LiDAR HD / account-gated Litto3D); tidal water-plane animation over a spring tide (the "living shoreline" centrepiece); real BATHYELLI datum seat.
