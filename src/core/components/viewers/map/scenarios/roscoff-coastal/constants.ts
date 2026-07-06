@@ -81,15 +81,15 @@ export const LIDAR_HD = {
  *
  * Values are deterministic build outputs of
  * `scripts/build_buildings_glb.py` (see data/output/placement.json). The glb is
- * Y-up local metres, base at y=0; placed at lng/lat via CustomModelLayer.
- * Vertical zero (y=0) = IGN69 ground_z below; the map has no terrain in this
- * scene, so `elevation` seats it against the flat basemap (illustrative until
- * BATHYELLI gives the real chart-datum↔ellipsoid separation).
+ * Y-up local metres; each building keeps its real relative IGN69 height (base =
+ * ground − global min), so with terrain enabled it sits on the hillside at true
+ * elevation — which the tidal flood needs. `elevation` (the seat slider) applies
+ * the calibration offset (illustrative until BATHYELLI gives the real datum sep).
  */
 export const ROSCOFF_BUILDINGS = {
   // ?v bumps whenever the baked glb changes so the browser can't serve a stale
   // cached copy (the file is a static asset, nearly the same size each rebuild).
-  url: '/demo/roscoff-buildings.glb?v=2',
+  url: '/demo/roscoff-buildings.glb?v=3',
   lng: -3.9744781,
   lat: 48.7220927,
   groundZIgn69: -1.14,

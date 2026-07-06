@@ -152,31 +152,18 @@ def main():
     # CityJSON (E,N,Z) -> glTF (x=East, y=Up, z=-North), local metres, base at y=0.
     ENU = np.column_stack([east, V[:, 2] - Zmin, -np.asarray(north, float)])
 
+    # Each building keeps its REAL relative IGN69 height (ENU already subtracted the
+    # global minimum Z), so the sloped coastal town sits on the terrain at true
+    # elevations — which is what the tidal flood needs (low harbour-front floods
+    # first, high inland stays dry). Terrain is enabled for Act 2 so the ground
+    # rises to meet each building.
     verts, faces, fcol = [], [], []
     for cid, co in d['CityObjects'].items():
-        geoms = [g for g in co.get('geometry', []) if str(g.get('lod')) == lod]
-        if not geoms:
-            continue
-
-        # Flatten each building to its OWN base (y=0). Roscoff is a coastal town on
-        # a slope (~0 m at the beach to ~15-20 m inland); the CDT scene has no
-        # terrain, so if we kept each building's real IGN69 ground height the town
-        # would look stepped/floating over the flat basemap. Subtracting each
-        # building's own minimum height seats them all on the plane while keeping
-        # roof heights intact. (Real per-building ground returns with the DTM +
-        # BATHYELLI datum work, which is what the tidal/flood story needs.)
-        idxs = set()
-        for g in geoms:
-            for ring_idx, _typ in faces_of(g):
-                idxs.update(ring_idx)
-        if not idxs:
-            continue
-        base_y = ENU[list(idxs), 1].min()
-
-        for g in geoms:
+        for g in co.get('geometry', []):
+            if str(g.get('lod')) != lod:
+                continue
             for ring_idx, typ in faces_of(g):
-                ring = ENU[ring_idx].copy()
-                ring[:, 1] -= base_y
+                ring = ENU[ring_idx]
                 base = len(verts)
                 for vx in ring:
                     verts.append(vx.tolist())
