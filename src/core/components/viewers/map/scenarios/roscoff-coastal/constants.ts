@@ -100,6 +100,20 @@ export const ROSCOFF_BUILDINGS = {
 /** Close-up camera for Act 2 (must be ≥ 15.5 zoom or CustomModelLayer won't draw). */
 export const ROSCOFF_CLOSEUP_VIEW = { center: ROSCOFF_CENTER, zoom: 16.5, pitch: 55, bearing: -20 } as const
 
+/** Water colour for the Act 2 tide plane (translucent sea blue). */
+export const WATER_COLOR = '#1e6f8c' as const
+
+/**
+ * Sea / foreshore area the Act 2 tide plane covers (WGS84 ring, closed). A
+ * coarse polygon over the harbour + foreshore north of the town — enough to
+ * bound the water so it never spills over land it shouldn't (Step-1 MVP; the
+ * real waterline over terrain is the deferred depth-occlusion step).
+ */
+export const SEA_POLYGON: Coord[] = [
+  [-3.9860, 48.7245], [-3.9560, 48.7245], [-3.9520, 48.7320],
+  [-3.9880, 48.7320], [-3.9860, 48.7245],
+]
+
 /** IGN BD ORTHO aerial imagery as XYZ raster tiles (WMTS PM = web mercator). */
 export const BDORTHO_TILE_URL =
   'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
