@@ -15,6 +15,7 @@ export interface TideState {
   residual: ResidualPoint[]
   currentObserved: TidePoint | null
   currentPredicted: number | null
+  model: TideModel | null
   loading: boolean
   error: string | null
   lastFetched: number | null
@@ -41,7 +42,7 @@ export function useRoscoffTide(nowMs?: () => number): TideState {
   const modelRef = React.useRef<TideModel | null>(null)
   const [state, setState] = React.useState<TideState>({
     observed: [], predicted: [], residual: [],
-    currentObserved: null, currentPredicted: null,
+    currentObserved: null, currentPredicted: null, model: null,
     loading: true, error: null, lastFetched: null,
   })
 
@@ -57,6 +58,7 @@ export function useRoscoffTide(nowMs?: () => number): TideState {
         residual: residualSeries(observed, predicted),
         currentObserved: co,
         currentPredicted: co ? predictTide(model, co.t) : null,
+        model,
         loading: false, error: null, lastFetched: end,
       })
     }
