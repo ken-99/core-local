@@ -11,6 +11,7 @@ import { useRoscoffTide } from './useRoscoffTide'
 import { springTideWindow, levelAt, tideAltitude } from './act2'
 import { predictTide } from './tidePrediction'
 import { exposure } from './act3'
+import { WATER_FLOOR_LEVEL_M } from './constants'
 import { MapContext, AppConfigContext } from '../../../../../store'
 
 interface Props { map: maplibregl.Map }
@@ -118,7 +119,9 @@ export const RoscoffCoastalDemo: React.FC<Props> = ({ map }) => {
     ? (live ? predictTide(tide.model, Date.now()) : levelAt(tide.model, tideWindow, phase))
     : 0
   const effLevel = baseLevel + surge
-  const waterAltitude = tideAltitude(effLevel, waterLevel)
+  // The visible plane rests on a floor so low tide doesn't sink under the terrain
+  // and vanish; the readout below still shows the true level.
+  const waterAltitude = tideAltitude(Math.max(effLevel, WATER_FLOOR_LEVEL_M), waterLevel)
   const exposed = exposure(baseLevel, surge)
   const nExposed = exposed.filter(e => e.exposed).length
   const levelLabel = tide.model ? `${effLevel.toFixed(2)} m` : '—'

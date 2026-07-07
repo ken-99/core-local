@@ -104,6 +104,15 @@ export const ROSCOFF_CLOSEUP_VIEW = { center: ROSCOFF_CENTER, zoom: 16.5, pitch:
 export const WATER_COLOR = '#1e6f8c' as const
 
 /**
+ * Lowest chart-datum level (m) the visible water plane drops to. The plane is
+ * flat with no foreshore bathymetry under it, so below this it would sink under
+ * the terrain and vanish ("disappears under the map"). Resting it on a floor
+ * keeps a believable low-water body until the real receding waterline lands
+ * (the deferred terrain depth-occlusion step). Tracks the sea-level slider.
+ */
+export const WATER_FLOOR_LEVEL_M = 3 as const
+
+/**
  * Sea / foreshore area the Act 2 tide plane covers (WGS84 ring, closed). A
  * coarse polygon over the harbour + foreshore north of the town — enough to
  * bound the water so it never spills over land it shouldn't (Step-1 MVP; the
