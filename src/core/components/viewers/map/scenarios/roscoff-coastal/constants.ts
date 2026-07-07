@@ -104,6 +104,15 @@ export const ROSCOFF_CLOSEUP_VIEW = { center: ROSCOFF_CENTER, zoom: 16.5, pitch:
 export const WATER_COLOR = '#1e6f8c' as const
 
 /**
+ * Lowest chart-datum level (m) the visible water plane drops to. The plane is
+ * flat with no foreshore bathymetry under it, so below this it would sink under
+ * the terrain and vanish ("disappears under the map"). Resting it on a floor
+ * keeps a believable low-water body until the real receding waterline lands
+ * (the deferred terrain depth-occlusion step). Tracks the sea-level slider.
+ */
+export const WATER_FLOOR_LEVEL_M = 3 as const
+
+/**
  * Sea / foreshore area the Act 2 tide plane covers (WGS84 ring, closed). A
  * coarse polygon over the harbour + foreshore north of the town — enough to
  * bound the water so it never spills over land it shouldn't (Step-1 MVP; the
@@ -113,18 +122,6 @@ export const SEA_POLYGON: Coord[] = [
   [-3.9860, 48.7245], [-3.9560, 48.7245], [-3.9520, 48.7320],
   [-3.9880, 48.7320], [-3.9860, 48.7245],
 ]
-
-/**
- * Terrain sampling for the Act 2 receding waterline. A grid over the sea-side
- * area; each point's ground height (queryTerrainElevation) decides where water
- * sits. Spacing ~30 m matches the coarse maptiler DEM — finer just re-interpolates
- * the same data. The bbox is generous so the waterline has room to climb the town
- * front at spring high; SEA_POLYGON still masks the inland side.
- */
-export const WATER_SAMPLE = {
-  bbox: [-3.9880, 48.7200, -3.9520, 48.7320] as BBox4,
-  spacingM: 30,
-} as const
 
 /** IGN BD ORTHO aerial imagery as XYZ raster tiles (WMTS PM = web mercator). */
 export const BDORTHO_TILE_URL =
