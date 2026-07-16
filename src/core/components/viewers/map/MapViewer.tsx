@@ -21,6 +21,7 @@ import { Organization } from '../../../types/dbTypes'
 import { CurrentLocation } from '../../../types/map'
 import { MapLayers } from './src/MapLayers'
 import SettingsButton from '../../ui/SettingsButton'
+import { MarChiquitaDemo } from './scenarios/mar-chiquita'
 
 const CANADA_DEFAULTS = {
   zoom: 3,
@@ -209,6 +210,8 @@ export function MapViewer({ width = '100%', height = '100%', organization }: Pro
                     empty slot adds no flex item / gap, but a mounted control stacks
                     above the legend + dataset-manager cards. */}
                 <div id="wms-time-slot" style={{ display: 'contents' }} />
+                {/* Dev-only scenario demo — never mounts in production. */}
+                {process.env.NODE_ENV === 'development' && <MarChiquitaDemo />}
                 <MapLegendHost />
                 <DatasetManagerMenu />
               </div>

@@ -1,0 +1,5 @@
+# Large source GeoTIFFs (build inputs, never committed).
+# The one-time prepare script turns these into the small baked artifacts
+# (ortho tiles + height-grid JSON) that the scenario actually ships.
+source/
+work/
