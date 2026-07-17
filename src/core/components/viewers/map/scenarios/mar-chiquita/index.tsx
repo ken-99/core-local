@@ -4,7 +4,7 @@ import { MapContext } from '../../../../../store/Map/context'
 import { WaterLayer, WATER_LAYER_ID } from './WaterLayer'
 import {
   ORTHO_IMAGE_URL, ORTHO_COORDINATES, MAR_CHIQUITA_VIEW,
-  LEVEL_MIN, LEVEL_MAX, LEVEL_DEFAULT,
+  LEVEL_MIN, LEVEL_MAX, LEVEL_DEFAULT, PLAY_PERIOD_MS,
 } from './constants'
 
 const ORTHO_SOURCE = 'mar-chiquita-ortho'
@@ -56,12 +56,11 @@ export const MarChiquitaDemo: React.FC = () => {
     if (!playing || !shown) return
     let raf = 0
     let t0 = 0
-    const PERIOD = 8000 // ms per full up-down cycle
     const mid = (LEVEL_MIN + LEVEL_MAX) / 2
     const amp = (LEVEL_MAX - LEVEL_MIN) / 2
     const tick = (t: number) => {
       if (!t0) t0 = t
-      const phase = ((t - t0) / PERIOD) * 2 * Math.PI
+      const phase = ((t - t0) / PLAY_PERIOD_MS) * 2 * Math.PI
       setLevel(mid - amp * Math.cos(phase)) // starts at LEVEL_MIN, rises first
       raf = requestAnimationFrame(tick)
     }

@@ -18,25 +18,37 @@ export interface WaterGrid {
 
 interface WaterPt { x: number; z: number; h: number }
 
+/** A wet polygon corner: position plus how deep the water stands there. */
+interface WetPt { x: number; z: number; depth: number }
+
 /**
  * Clip a terrain triangle to the underwater side (h < waterAltitude) and return
- * the wet polygon's corners in order (x,z). Sutherland–Hodgman against the single
- * iso-height plane — unambiguous, no marching-squares saddle case.
+ * the wet polygon's corners in order (x,z) with each one's depth. Sutherland–Hodgman
+ * against the single iso-height plane — unambiguous, no marching-squares saddle case.
+ * Corners cut on the plane sit exactly at the waterline, so their depth is 0.
  */
-function clipTriangleBelow(tri: WaterPt[], waterAltitude: number): { x: number; z: number }[] {
-  const out: { x: number; z: number }[] = []
+function clipTriangleBelow(tri: WaterPt[], waterAltitude: number): WetPt[] {
+  const out: WetPt[] = []
   for (let i = 0; i < tri.length; i++) {
     const a = tri[i]
     const b = tri[(i + 1) % tri.length]
     const aWet = a.h < waterAltitude
     const bWet = b.h < waterAltitude
-    if (aWet) out.push({ x: a.x, z: a.z })
+    if (aWet) out.push({ x: a.x, z: a.z, depth: waterAltitude - a.h })
     if (aWet !== bWet) {
       const t = (waterAltitude - a.h) / (b.h - a.h)
-      out.push({ x: a.x + t * (b.x - a.x), z: a.z + t * (b.z - a.z) })
+      out.push({ x: a.x + t * (b.x - a.x), z: a.z + t * (b.z - a.z), depth: 0 })
     }
   }
   return out
+}
+
+/** A built water surface: triangle positions plus a depth per vertex. */
+export interface WaterMesh {
+  /** interleaved [x,y,z, …] triangle positions, y always 0 */
+  positions: number[]
+  /** water depth (m) at each vertex, `positions.length / 3` long */
+  depths: number[]
 }
 
 /**
@@ -44,16 +56,22 @@ function clipTriangleBelow(tri: WaterPt[], waterAltitude: number): { x: number; 
  * triangles, clip each to the part below `waterAltitude`, and fan-triangulate the
  * wet polygon. Output is a flat footprint at y=0; the caller lifts it to the water
  * height via the model matrix, so the horizontal edge is the DEM's iso-height
- * contour at the current level. Returns interleaved [x,y,z, …] triangle positions.
+ * contour at the current level. Each vertex also carries its depth, which the
+ * clip gives for free — waterline corners land on the plane at depth 0.
  */
-export function buildWaterMesh(grid: WaterGrid, waterAltitude: number): number[] {
+export function buildWaterMesh(grid: WaterGrid, waterAltitude: number): WaterMesh {
   const { cols, rows, xs, zs, h, cellInMask } = grid
-  const verts: number[] = []
-  const emit = (poly: { x: number; z: number }[]) => {
+  const positions: number[] = []
+  const depths: number[] = []
+  const push = (p: WetPt) => {
+    positions.push(p.x, 0, p.z)
+    depths.push(p.depth)
+  }
+  const emit = (poly: WetPt[]) => {
     for (let k = 1; k < poly.length - 1; k++) {
-      verts.push(poly[0].x, 0, poly[0].z)
-      verts.push(poly[k].x, 0, poly[k].z)
-      verts.push(poly[k + 1].x, 0, poly[k + 1].z)
+      push(poly[0])
+      push(poly[k])
+      push(poly[k + 1])
     }
   }
   for (let r = 0; r < rows - 1; r++) {
@@ -67,5 +85,5 @@ export function buildWaterMesh(grid: WaterGrid, waterAltitude: number): number[]
       emit(clipTriangleBelow([A, C, D], waterAltitude))
     }
   }
-  return verts
+  return { positions, depths }
 }
