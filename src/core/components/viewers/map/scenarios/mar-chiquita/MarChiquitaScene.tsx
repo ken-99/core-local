@@ -8,7 +8,8 @@ import { buildWaterMesh } from './waterMesh'
 import { waterDepthRgba } from './waterShading'
 import { heightRampColor, hillshade } from './terrainShading'
 import gridJson from './marChiquitaGrid'
-import { EXAGGERATION, ORTHO_COORDINATES, HEIGHT_TINT_STRENGTH, ORTHO_IMAGE_URL } from './constants'
+import { EXAGGERATION, ORTHO_COORDINATES, HEIGHT_TINT_STRENGTH, ORTHO_IMAGE_URL, EDGE_TRIM_CELLS } from './constants'
+import { trimMaskEdges } from './edgeTrim'
 
 export const SCENE_LAYER_ID = 'mar-chiquita-scene'
 const CENTER = gridJson.center as [number, number]
@@ -30,6 +31,15 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
   React.useEffect(() => {
     if (!map) return
     let disposed = false
+
+    // Everything drawn — ground, water, and later the pedestal walls — uses this
+    // one trimmed mask, so the three can never disagree about where the survey
+    // ends. Trimming only the ground would let water spill past its edge.
+    const drawGrid = {
+      ...grid,
+      cellInMask: trimMaskEdges(grid.cellInMask, grid.cols - 1, grid.rows - 1, EDGE_TRIM_CELLS),
+    }
+
     const renderer = new THREE.WebGLRenderer({
       canvas: map.getCanvas(),
       context: map.getCanvas().getContext('webgl') as WebGLRenderingContext,
@@ -41,7 +51,7 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     const scene = new THREE.Scene()
 
     // Terrain: opaque, writes depth. Composites photo / colour-by-height / hillshade.
-    const terrain = buildTerrainMesh(grid, { exaggeration: EXAGGERATION, ortho: ORTHO_COORDINATES })
+    const terrain = buildTerrainMesh(drawGrid, { exaggeration: EXAGGERATION, ortho: ORTHO_COORDINATES })
     const terrainGeom = new THREE.BufferGeometry()
     terrainGeom.setAttribute('position', new THREE.Float32BufferAttribute(terrain.positions, 3))
     terrainGeom.setAttribute('normal', new THREE.Float32BufferAttribute(terrain.normals, 3))
@@ -137,7 +147,7 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     // Worst case per cell: 2 terrain triangles, each clipped against one plane to at
     // most a quad, each quad fanned to 2 triangles = 12 vertices.
     const MAX_VERTS_PER_CELL = 12
-    const maxWaterVerts = grid.cellInMask.reduce((n, on) => (on ? n + MAX_VERTS_PER_CELL : n), 0)
+    const maxWaterVerts = drawGrid.cellInMask.reduce((n, on) => (on ? n + MAX_VERTS_PER_CELL : n), 0)
     const waterPos = new THREE.Float32BufferAttribute(new Float32Array(maxWaterVerts * 3), 3)
     const waterCol = new THREE.Float32BufferAttribute(new Float32Array(maxWaterVerts * 4), 4)
     waterPos.setUsage(THREE.DynamicDrawUsage)
@@ -148,7 +158,7 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     const _c = new THREE.Color()
     let builtLevel = Number.NaN
     const rebuildWater = (lvl: number) => {
-      const { positions, depths } = buildWaterMesh(grid, lvl)
+      const { positions, depths } = buildWaterMesh(drawGrid, lvl)
       const n = Math.min(depths.length, maxWaterVerts)
       const pos = waterPos.array as Float32Array
       const col = waterCol.array as Float32Array
