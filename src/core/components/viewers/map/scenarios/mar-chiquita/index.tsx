@@ -1,54 +1,98 @@
 'use client'
 import * as React from 'react'
 import { MapContext } from '../../../../../store/Map/context'
-import { WaterLayer, WATER_LAYER_ID } from './WaterLayer'
+import { MarChiquitaScene } from './MarChiquitaScene'
 import {
-  ORTHO_IMAGE_URL, ORTHO_COORDINATES, MAR_CHIQUITA_VIEW,
+  MAR_CHIQUITA_VIEW, SCENE_PITCH,
   LEVEL_MIN, LEVEL_MAX, LEVEL_DEFAULT, PLAY_PERIOD_MS,
+  LAYER_DEFAULTS, LAYER_KEYS, LAYER_LABELS, type LayerKey,
 } from './constants'
 
-const ORTHO_SOURCE = 'mar-chiquita-ortho'
-const ORTHO_LAYER = 'mar-chiquita-ortho'
-
 /**
- * Mar Chiquita water-level reveal — self-contained dev demo. Drapes the drone
- * orthomosaic and shows a DEM-derived waterline driven by a level slider + Play
- * (sine) animation. Mounted in the bottom-left overlay stack (mirrors
- * HalifaxTowersDemo). Mercator only — never sets projection.
+ * Mar Chiquita water-level reveal — self-contained dev demo. The drone DEM is
+ * drawn as a 3D ground surface with the orthomosaic draped on it, under a
+ * DEM-derived waterline driven by a level slider + Play (sine) animation. Three
+ * independent layer toggles composite the surface: Photo / Hillshade / Height.
+ * Mounted in the bottom-left overlay stack (mirrors HalifaxTowersDemo).
+ * Mercator only — never sets projection.
  */
 export const MarChiquitaDemo: React.FC = () => {
-  const { state } = React.useContext(MapContext)
+  const { state, dispatch } = React.useContext(MapContext)
   const map = state.map.map
+  const terrainLevel = state.map.terrainLevel
   const [shown, setShown] = React.useState(false)
   const [level, setLevel] = React.useState(LEVEL_DEFAULT)
   const [playing, setPlaying] = React.useState(false)
+  const [layers, setLayers] = React.useState<Record<LayerKey, boolean>>({ ...LAYER_DEFAULTS })
 
-  // Ortho drape on toggle.
+  // Hiding unmounts the controls but not this component, so the toggles would
+  // otherwise keep their last state — the demo should open the same way every time.
+  React.useEffect(() => { if (!shown) setLayers({ ...LAYER_DEFAULTS }) }, [shown])
+
+  // Hold flat ground for as long as the demo is shown.
+  //
+  // The scene draws its OWN ground — the drone DEM as a 3D mesh — and depends on
+  // being the only ground in the shared depth buffer, so that dunes correctly hide
+  // the water behind them. The app's global terrain (default 'medium') would put a
+  // second, unrelated surface (maptiler's coarse DEM) into that same depth buffer
+  // and fight our occlusion. So the demo owns the terrain state while it's up.
+  //
+  // Do NOT "simplify" this away: without it the water appears to cut a different
+  // ground than the one it was derived from, and changes on every terrain toggle.
+  //
+  // `latestTerrain` mirrors the live setting so the take-over effect can read it
+  // without depending on it (which would make it restore on every terrain change
+  // instead of only when the demo hides).
+  const latestTerrain = React.useRef(terrainLevel)
+  latestTerrain.current = terrainLevel
+
+  // Take over on show, restore the user's setting on hide. Keyed off `shown`
+  // only, so the cleanup fires exactly when the demo is hidden or unmounts.
+  //
+  // The restore puts the map back itself rather than only dispatching state: the
+  // only other code that turns this setting into a real `setTerrain` call lives in
+  // the Settings panel's TerrainLevel, which is mounted only while that panel is
+  // open — so a state-only restore would leave the panel reading "Medium" over a
+  // flat map. We re-apply only sources that already exist, because a terrain the
+  // user never had applied needs no restoring (and TerrainLevel owns creating them).
+  const savedTerrain = React.useRef(terrainLevel)
   React.useEffect(() => {
-    if (!map) return
-    const add = () => {
-      if (!map.getSource(ORTHO_SOURCE)) {
-        map.addSource(ORTHO_SOURCE, {
-          type: 'image', url: ORTHO_IMAGE_URL, coordinates: ORTHO_COORDINATES,
-        })
-      }
-      if (!map.getLayer(ORTHO_LAYER)) {
-        // Insert the ortho BELOW the water layer (a child effect adds the water
-        // layer first, so it exists here) — otherwise the opaque ortho covers it.
-        const beforeWater = map.getLayer(WATER_LAYER_ID) ? WATER_LAYER_ID : undefined
-        map.addLayer({ id: ORTHO_LAYER, type: 'raster', source: ORTHO_SOURCE, paint: { 'raster-opacity': 1 } }, beforeWater)
-      }
-      map.flyTo({ center: MAR_CHIQUITA_VIEW.center, zoom: MAR_CHIQUITA_VIEW.zoom, duration: 1500 })
-    }
-    const remove = () => {
+    if (!map || !shown) return
+    savedTerrain.current = latestTerrain.current // their value, before we force off
+    dispatch({ type: 'UPDATE_TERRAIN_LEVEL', payload: { terrainLevel: 'disabled' } })
+    try { map.setTerrain(null) } catch { /* style tearing down */ }
+    return () => {
+      const restore = savedTerrain.current
+      dispatch({ type: 'UPDATE_TERRAIN_LEVEL', payload: { terrainLevel: restore } })
       try {
-        if (map.getLayer(ORTHO_LAYER)) map.removeLayer(ORTHO_LAYER)
-        if (map.getSource(ORTHO_SOURCE)) map.removeSource(ORTHO_SOURCE)
+        // Exaggerations mirror TerrainLevel's — kept in step by hand, but only
+        // reachable when that component already built the source.
+        if (restore === 'medium' && map.getSource('terrain-source')) {
+          map.setTerrain({ source: 'terrain-source', exaggeration: 1 })
+        } else if (restore === 'high' && map.getSource('hrdem-terrain')) {
+          map.setTerrain({ source: 'hrdem-terrain', exaggeration: 0.0002 })
+        }
       } catch { /* style tearing down */ }
     }
-    if (shown) { map.isStyleLoaded() ? add() : map.once('load', add) }
-    else remove()
-    return () => { map.off('load', add); remove() }
+  }, [map, shown, dispatch])
+
+  // While shown, re-assert flat ground if the user flips terrain back on. The
+  // Settings toggle snaps to Disabled — the demo can't render on sloped ground.
+  React.useEffect(() => {
+    if (!map || !shown || terrainLevel === 'disabled') return
+    dispatch({ type: 'UPDATE_TERRAIN_LEVEL', payload: { terrainLevel: 'disabled' } })
+    try { map.setTerrain(null) } catch { /* style tearing down */ }
+  }, [map, shown, terrainLevel, dispatch])
+
+  // Fly to the scene at a tilt on show, so the relief reads immediately.
+  React.useEffect(() => {
+    if (!map || !shown) return
+    const fly = () => map.flyTo({
+      center: MAR_CHIQUITA_VIEW.center, zoom: MAR_CHIQUITA_VIEW.zoom,
+      pitch: SCENE_PITCH, duration: 1500,
+    })
+    map.isStyleLoaded() ? fly() : map.once('load', fly)
+    return () => { map.off('load', fly) }
   }, [map, shown])
 
   // Play: animate the level on a sine cycle between LEVEL_MIN and LEVEL_MAX.
@@ -84,6 +128,19 @@ export const MarChiquitaDemo: React.FC = () => {
       </div>
       {shown && (
         <>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            {LAYER_KEYS.map((key: LayerKey) => (
+              <button key={key} type="button" aria-pressed={layers[key]}
+                onClick={() => setLayers(l => ({ ...l, [key]: !l[key] }))}
+                style={{
+                  cursor: 'pointer', flex: 1, borderRadius: 6, padding: '3px 4px',
+                  border: '1px solid #cbd5e1',
+                  background: layers[key] ? '#2b7bbd' : '#fff', color: layers[key] ? '#fff' : '#334155',
+                }}>
+                {LAYER_LABELS[key]}
+              </button>
+            ))}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button type="button" onClick={() => setPlaying(p => !p)}
               style={{ cursor: 'pointer', border: '1px solid #cbd5e1', borderRadius: 6, padding: '2px 10px', background: '#fff' }}>
@@ -94,7 +151,7 @@ export const MarChiquitaDemo: React.FC = () => {
               style={{ flex: 1 }} />
             <span style={{ width: 42, textAlign: 'right' }}>{level.toFixed(2)} m</span>
           </div>
-          <WaterLayer map={map} level={level} />
+          <MarChiquitaScene map={map} level={level} photo={layers.photo} hillshade={layers.hillshade} height={layers.height} />
         </>
       )}
     </div>
