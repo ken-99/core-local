@@ -1,11 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { buildWaterMesh, type WaterGrid } from './waterMesh'
+import { buildWaterMesh, connectedWetCells, type WaterGrid } from './waterMesh'
 
 // Column of z-values from an interleaved [x,y,z,…] mesh.
 function zsOf(mesh: number[]): number[] {
   const out: number[] = []
   for (let i = 2; i < mesh.length; i += 3) out.push(mesh[i])
   return out
+}
+
+// 6×6 vertices → 5×5 cells. All dry (h=10) except a low left edge (the sea, so
+// column-0 cells flood and reach the grid boundary) and one low vertex dead in
+// the interior (a dune hollow, wetting its four cells but touching no edge).
+function seaAndPool(): WaterGrid {
+  const cols = 6, rows = 6
+  const h: number[] = new Array(cols * rows).fill(10)
+  for (let r = 0; r < rows; r++) h[r * cols + 0] = 0 // sea along the left edge
+  h[2 * cols + 3] = 0 // isolated interior hollow at vertex (row 2, col 3)
+  return {
+    cols, rows,
+    xs: [0, 10, 20, 30, 40, 50], zs: [0, 10, 20, 30, 40, 50],
+    h, cellInMask: new Array((cols - 1) * (rows - 1)).fill(true),
+  }
 }
 
 describe('buildWaterMesh', () => {
@@ -111,5 +126,56 @@ describe('buildWaterMesh', () => {
   it('never reports a negative depth', () => {
     const mesh = buildWaterMesh(oneCell([0, 4.9, 10, 10]), 5)
     for (const d of mesh.depths) expect(d).toBeGreaterThanOrEqual(0)
+  })
+
+  it('renders only sea-connected water, not interior pools', () => {
+    // Sea along the left edge (x∈[0,10]); a lone hollow in the interior at
+    // x≈20–40. If the isolated pool leaked in, some vertex would land past x=15.
+    const { positions } = buildWaterMesh(seaAndPool(), 5)
+    expect(positions.length).toBeGreaterThan(0)
+    const xs: number[] = []
+    for (let i = 0; i < positions.length; i += 3) xs.push(positions[i])
+    expect(Math.max(...xs)).toBeLessThan(15)
+  })
+})
+
+describe('connectedWetCells', () => {
+  const CW = 5 // cells per row = cols - 1
+  const at = (keep: boolean[], r: number, c: number) => keep[r * CW + c]
+
+  it('keeps water that reaches the survey edge (the sea)', () => {
+    const keep = connectedWetCells(seaAndPool(), 5)
+    for (let r = 0; r < 5; r++) expect(at(keep, r, 0)).toBe(true)
+  })
+
+  it('drops an interior hollow with no path to the edge', () => {
+    const keep = connectedWetCells(seaAndPool(), 5)
+    // The low vertex (2,3) wets its four surrounding cells; none touch an edge.
+    for (const [r, c] of [[1, 2], [1, 3], [2, 2], [2, 3]] as const) {
+      expect(at(keep, r, c)).toBe(false)
+    }
+  })
+
+  // Documented limit, pinned so nobody "fixes" it into an outer-edge-only seed:
+  // ANY boundary cell seeds the fill, including the landward edge. Nothing is
+  // surveyed past that edge, so we can't know water wouldn't arrive there —
+  // LEVEL_MAX is what keeps this from showing in the demo, not this function.
+  it('keeps a hollow that reaches any survey edge, seaward or not', () => {
+    const g = seaAndPool()
+    // Low vertex on the far (landward) edge, kept clear of the interior hollow
+    // so the two can't merge — otherwise this would prove nothing.
+    g.h[4 * g.cols + 5] = 0
+    const keep = connectedWetCells(g, 5)
+    // Its two cells sit on the right boundary, so they count as connected.
+    expect(at(keep, 3, 4)).toBe(true)
+    expect(at(keep, 4, 4)).toBe(true)
+    // The genuinely interior hollow is still dropped.
+    expect(at(keep, 2, 2)).toBe(false)
+  })
+
+  it('keeps every wet cell when the whole survey is underwater', () => {
+    const g = seaAndPool()
+    const keep = connectedWetCells({ ...g, h: g.h.map(() => 0) }, 5)
+    expect(keep.every(Boolean)).toBe(true)
   })
 })
