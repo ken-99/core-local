@@ -82,3 +82,21 @@ export const LAYER_KEYS: readonly LayerKey[] = ['photo', 'hillshade', 'height']
 export const LAYER_DEFAULTS: Record<LayerKey, boolean> = { photo: true, hillshade: false, height: false }
 /** Button labels for the toggles. */
 export const LAYER_LABELS: Record<LayerKey, string> = { photo: 'Photo', hillshade: 'Hillshade', height: 'Height' }
+
+/**
+ * How many rings of cells to shave off the edge of the survey before drawing.
+ *
+ * The mask comes from the height file's nodata flags, so the boundary is ragged
+ * and seven cells dangle off it alone. Each pass shaves ~2.37 m off every edge
+ * and costs ~3.6% of the surveyed area (96.4% left at 1 pass, 92.8% at 2,
+ * 89.3% at 3).
+ *
+ * NOT purely cosmetic: the pedestal walls are built from the trimmed mask too,
+ * so raising this visibly moves the walls inward as well as the outline.
+ *
+ * This cannot make the edges straight — a rotated shape on a square grid always
+ * steps, however far it is inset. If the stepping still reads badly, the fix is
+ * cutting cells partway (see the design doc), NOT a bigger trim, which only eats
+ * the survey.
+ */
+export const EDGE_TRIM_CELLS = 1
