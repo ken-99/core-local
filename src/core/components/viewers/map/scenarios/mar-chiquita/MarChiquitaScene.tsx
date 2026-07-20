@@ -5,10 +5,14 @@ import type maplibregl from 'maplibre-gl'
 import type { CustomLayerInterface } from 'maplibre-gl'
 import { buildTerrainMesh } from './terrainMesh'
 import { buildWaterMesh } from './waterMesh'
+import { buildSkirtMesh } from './skirtMesh'
 import { waterDepthRgba } from './waterShading'
-import { heightRampColor, hillshade } from './terrainShading'
+import { heightRampColor, hillshade, skirtColor } from './terrainShading'
 import gridJson from './marChiquitaGrid'
-import { EXAGGERATION, ORTHO_COORDINATES, HEIGHT_TINT_STRENGTH, ORTHO_IMAGE_URL, EDGE_TRIM_CELLS } from './constants'
+import {
+  EXAGGERATION, ORTHO_COORDINATES, HEIGHT_TINT_STRENGTH, ORTHO_IMAGE_URL, EDGE_TRIM_CELLS,
+  PEDESTAL_DEPTH_M,
+} from './constants'
 import { trimMaskEdges } from './edgeTrim'
 
 export const SCENE_LAYER_ID = 'mar-chiquita-scene'
@@ -129,6 +133,30 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     })
     scene.add(new THREE.Mesh(terrainGeom, terrainMat))
 
+    // Pedestal: opaque walls from the survey edge down to a flat base, so the
+    // ground reads as a solid slab rather than a sheet ending in mid-air. Built
+    // from the same trimmed mask as the ground, so the two always line up.
+    // The base is left open — you would only see it from below the horizon, and
+    // the ground is drawn double-sided, so it still reads as solid from there.
+    const skirt = buildSkirtMesh(drawGrid, {
+      exaggeration: EXAGGERATION,
+      depthBelowLowest: PEDESTAL_DEPTH_M,
+    })
+    const skirtGeom = new THREE.BufferGeometry()
+    skirtGeom.setAttribute('position', new THREE.Float32BufferAttribute(skirt.positions, 3))
+    const skirtColors = new Float32Array(skirt.t.length * 3)
+    const _sc = new THREE.Color()
+    for (let i = 0; i < skirt.t.length; i++) {
+      const [r, g, b] = skirtColor(skirt.t[i])
+      _sc.setRGB(r, g, b, THREE.SRGBColorSpace) // ramp is sRGB
+      skirtColors[i * 3] = _sc.r; skirtColors[i * 3 + 1] = _sc.g; skirtColors[i * 3 + 2] = _sc.b
+    }
+    skirtGeom.setAttribute('color', new THREE.Float32BufferAttribute(skirtColors, 3))
+    const skirtMat = new THREE.MeshBasicMaterial({
+      vertexColors: true, side: THREE.DoubleSide, depthWrite: true, depthTest: true,
+    })
+    scene.add(new THREE.Mesh(skirtGeom, skirtMat))
+
     // Water: translucent, tests depth but does not write it, lifted to the level.
     const waterGeom = new THREE.BufferGeometry()
     const waterMat = new THREE.MeshBasicMaterial({
@@ -202,6 +230,7 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
       disposed = true
       if (map.getLayer(SCENE_LAYER_ID)) map.removeLayer(SCENE_LAYER_ID)
       terrainGeom.dispose(); terrainMat.dispose(); photoTex.dispose()
+      skirtGeom.dispose(); skirtMat.dispose()
       waterGeom.dispose(); waterMat.dispose(); renderer.dispose()
     }
   }, [map])

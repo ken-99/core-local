@@ -100,3 +100,20 @@ export const LAYER_LABELS: Record<LayerKey, string> = { photo: 'Photo', hillshad
  * the survey.
  */
 export const EDGE_TRIM_CELLS = 1
+
+/**
+ * How far below the lowest surveyed ground the pedestal base sits, in metres.
+ * Stretched by EXAGGERATION like everything else, so 3 m reads as ~9 m of wall
+ * against ~27 m of stretched relief — about a third of the terrain height:
+ * solid enough to look deliberate, not so tall it becomes the subject.
+ */
+export const PEDESTAL_DEPTH_M = 3
+
+/**
+ * Pedestal wall colours, top to base. The gradient is what makes it read as a
+ * cut earth face rather than a flat card. Deliberately fixed — the wall does not
+ * follow the Photo / Hillshade / Height toggles, so it stays a stable frame
+ * while those change how the ground is read.
+ */
+export const SKIRT_TOP_COLOR = '#8a7f6d'
+export const SKIRT_BASE_COLOR = '#3b352d'
