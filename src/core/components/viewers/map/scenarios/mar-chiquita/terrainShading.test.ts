@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { heightRampColor, hillshade } from './terrainShading'
-import { HILLSHADE_AMBIENT, SUN_DIR } from './constants'
+import { heightRampColor, hillshade, skirtColor } from './terrainShading'
+import { HILLSHADE_AMBIENT, SUN_DIR, SKIRT_TOP_COLOR, SKIRT_BASE_COLOR } from './constants'
 
 describe('heightRampColor', () => {
   it('returns the low colour at the bottom of the range', () => {
@@ -38,5 +38,37 @@ describe('hillshade', () => {
       expect(s).toBeGreaterThanOrEqual(HILLSHADE_AMBIENT - 1e-9)
       expect(s).toBeLessThanOrEqual(1 + 1e-9)
     }
+  })
+})
+
+describe('skirtColor', () => {
+  const hex = (h: string): [number, number, number] => {
+    const n = parseInt(h.slice(1), 16)
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
+  }
+
+  it('returns the top colour at the top of the wall', () => {
+    const [r, g, b] = skirtColor(0)
+    const [tr, tg, tb] = hex(SKIRT_TOP_COLOR)
+    expect(r).toBeCloseTo(tr, 5)
+    expect(g).toBeCloseTo(tg, 5)
+    expect(b).toBeCloseTo(tb, 5)
+  })
+
+  it('returns the base colour at the bottom of the wall', () => {
+    const [r, g, b] = skirtColor(1)
+    const [br, bg, bb] = hex(SKIRT_BASE_COLOR)
+    expect(r).toBeCloseTo(br, 5)
+    expect(g).toBeCloseTo(bg, 5)
+    expect(b).toBeCloseTo(bb, 5)
+  })
+
+  it('darkens on the way down', () => {
+    expect(skirtColor(0.75)[0]).toBeLessThan(skirtColor(0.25)[0])
+  })
+
+  it('clamps outside 0..1', () => {
+    expect(skirtColor(-1)).toEqual(skirtColor(0))
+    expect(skirtColor(2)).toEqual(skirtColor(1))
   })
 })
