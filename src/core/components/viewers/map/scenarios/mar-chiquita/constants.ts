@@ -1,8 +1,3 @@
-import grid from './marChiquitaGrid'
-
-/** WGS84 center the water mesh is localized around (from the baked grid). */
-export const MAR_CHIQUITA_CENTER = grid.center as [number, number]
-
 /** Ortho drape — single georeferenced RGBA image (public/demo). */
 export const ORTHO_IMAGE_URL = '/demo/mar-chiquita/ortho.png'
 /** Image-source corners [TL, TR, BR, BL] in WGS84, from the ortho GeoTIFF extent. */
@@ -14,7 +9,7 @@ export const ORTHO_COORDINATES: [[number, number], [number, number], [number, nu
 ]
 
 /**
- * Where the camera should look — NOT `MAR_CHIQUITA_CENTER`.
+ * Where the camera should look — NOT the baked grid's own `center`.
  *
  * The DEM's bounding box is 427×421 m, but the surveyed ground inside it is a
  * rotated diamond of ~268×272 m sitting to the southwest, so the box centre is
@@ -56,3 +51,34 @@ export const WATER_DEEP_COLOR = '#14568c'
 export const WATER_SHALLOW_ALPHA = 0.28
 export const WATER_DEEP_ALPHA = 0.80
 export const WATER_DEPTH_SATURATE_M = 2.0
+
+/** Vertical exaggeration for the 3D relief (survey is ~270 m wide, ~9 m tall). */
+export const EXAGGERATION = 3
+
+/** DEM height range (m) the colour ramp spans (from the baked grid: −0.06…9.19). */
+export const HEIGHT_MIN = 0
+export const HEIGHT_MAX = 9
+
+/** Colour-by-height ramp, low → high, mixed in sRGB. */
+export const RAMP_LOW_COLOR = '#1b7a3d'  // low ground green
+export const RAMP_HIGH_COLOR = '#f2efe6' // high ground pale
+
+/** Fixed sun for hillshade: NW, high. Local frame x=east, y=up, z=−north. */
+export const SUN_DIR: [number, number, number] = [-0.5, 0.7, -0.5]
+/** Floor brightness in shadow, so shaded faces never go pure black. */
+export const HILLSHADE_AMBIENT = 0.35
+
+/** When Photo and Colour-by-height are both on, how strongly the tint shows. */
+export const HEIGHT_TINT_STRENGTH = 0.4
+
+/** Camera pitch (deg) the demo opens at, so the relief reads immediately. */
+export const SCENE_PITCH = 50
+
+/** The three independently-togglable surface layers. */
+export type LayerKey = 'photo' | 'hillshade' | 'height'
+/** Toggle order, left to right in the control strip. */
+export const LAYER_KEYS: readonly LayerKey[] = ['photo', 'hillshade', 'height']
+/** Which layers are on when the demo is shown (and reset to on every hide). */
+export const LAYER_DEFAULTS: Record<LayerKey, boolean> = { photo: true, hillshade: false, height: false }
+/** Button labels for the toggles. */
+export const LAYER_LABELS: Record<LayerKey, string> = { photo: 'Photo', hillshade: 'Hillshade', height: 'Height' }
