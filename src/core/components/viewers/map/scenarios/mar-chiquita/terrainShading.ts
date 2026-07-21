@@ -1,6 +1,6 @@
 import {
   HEIGHT_MIN, HEIGHT_MAX, RAMP_LOW_COLOR, RAMP_HIGH_COLOR,
-  SUN_DIR, HILLSHADE_AMBIENT, SKIRT_TOP_COLOR, SKIRT_BASE_COLOR,
+  SUN_DIR, HILLSHADE_AMBIENT,
 } from './constants'
 
 /** '#1b7a3d' → [r,g,b] as 0–1 sRGB. */
@@ -23,20 +23,4 @@ export function heightRampColor(height: number): [number, number, number] {
 export function hillshade(normal: [number, number, number]): number {
   const d = Math.max(0, normal[0] * SUN[0] + normal[1] * SUN[1] + normal[2] * SUN[2])
   return HILLSHADE_AMBIENT + (1 - HILLSHADE_AMBIENT) * d
-}
-
-const SKIRT_TOP = hexToRgb(SKIRT_TOP_COLOR)
-const SKIRT_BASE = hexToRgb(SKIRT_BASE_COLOR)
-
-/**
- * Pedestal wall colour at `t` — 0 at the top of the wall, 1 at its base — in
- * sRGB. The darkening downward is what reads as a cut earth face.
- */
-export function skirtColor(t: number): [number, number, number] {
-  const u = Math.min(1, Math.max(0, t))
-  return [
-    SKIRT_TOP[0] + (SKIRT_BASE[0] - SKIRT_TOP[0]) * u,
-    SKIRT_TOP[1] + (SKIRT_BASE[1] - SKIRT_TOP[1]) * u,
-    SKIRT_TOP[2] + (SKIRT_BASE[2] - SKIRT_TOP[2]) * u,
-  ]
 }

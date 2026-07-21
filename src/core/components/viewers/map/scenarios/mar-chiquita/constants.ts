@@ -1,5 +1,10 @@
-/** Ortho drape — single georeferenced RGBA image (public/demo). */
-export const ORTHO_IMAGE_URL = '/demo/mar-chiquita/ortho.png'
+/**
+ * Ortho drape — single georeferenced image (public/demo). JPEG, not PNG: the
+ * terrain shader samples only .rgb, so the source alpha is unused, and a 2 MB
+ * full-res JPEG replaces the 19 MB PNG with no visible loss — the PNG decode was
+ * what made the ground pop in late on load.
+ */
+export const ORTHO_IMAGE_URL = '/demo/mar-chiquita/ortho.jpg'
 /** Image-source corners [TL, TR, BR, BL] in WGS84, from the ortho GeoTIFF extent. */
 export const ORTHO_COORDINATES: [[number, number], [number, number], [number, number], [number, number]] = [
   [-57.3833475, -37.7072129],
@@ -85,35 +90,35 @@ export const LAYER_LABELS: Record<LayerKey, string> = { photo: 'Photo', hillshad
 
 /**
  * How many rings of cells to shave off the edge of the survey before drawing.
+ * 0 = draw the full surveyed surface, ragged edge and all (the current choice —
+ * keep every cell of data).
  *
  * The mask comes from the height file's nodata flags, so the boundary is ragged
  * and seven cells dangle off it alone. Each pass shaves ~2.37 m off every edge
- * and costs ~3.6% of the surveyed area (96.4% left at 1 pass, 92.8% at 2,
- * 89.3% at 3).
+ * and costs ~3.6% of the surveyed area (96.4% left at 1 pass, 92.8% at 2). The
+ * ground, water, and footprint plate all read the same trimmed mask, so they can
+ * never disagree about where the survey ends.
  *
- * NOT purely cosmetic: the pedestal walls are built from the trimmed mask too,
- * so raising this visibly moves the walls inward as well as the outline.
- *
- * This cannot make the edges straight — a rotated shape on a square grid always
- * steps, however far it is inset. If the stepping still reads badly, the fix is
- * cutting cells partway (see the design doc), NOT a bigger trim, which only eats
- * the survey.
+ * Trimming cannot make the edges straight — a rotated shape on a square grid
+ * always steps, however far it is inset. If the stepping ever reads badly, the
+ * fix is cutting cells partway (see the design doc), NOT a bigger trim.
  */
-export const EDGE_TRIM_CELLS = 1
+export const EDGE_TRIM_CELLS = 0
 
 /**
- * How far below the lowest surveyed ground the pedestal base sits, in metres.
- * Stretched by EXAGGERATION like everything else, so 3 m reads as ~9 m of wall
- * against ~27 m of stretched relief — about a third of the terrain height:
- * solid enough to look deliberate, not so tall it becomes the subject.
+ * Survey footprint plate — a flat "site-plan" plate drawn on the ground under the
+ * relief, at the exact survey edge (no outward offset). 0 = the plate matches the
+ * surface footprint cell-for-cell. Raising it grows the plate outward by this
+ * many cells (~2.37 m each) to leave a visible rim past the relief's base.
  */
-export const PEDESTAL_DEPTH_M = 3
-
+export const FOOTPRINT_MARGIN_CELLS = 0
+/** Semi-transparent fill, so the basemap shows through the plate. */
+export const FOOTPRINT_FILL_COLOR = '#334155' // slate
+export const FOOTPRINT_FILL_ALPHA = 0.25
+/** The crisp "drafting line" along the plate boundary — the architectural read. */
+export const FOOTPRINT_OUTLINE_COLOR = '#1e293b'
 /**
- * Pedestal wall colours, top to base. The gradient is what makes it read as a
- * cut earth face rather than a flat card. Deliberately fixed — the wall does not
- * follow the Photo / Hillshade / Height toggles, so it stays a stable frame
- * while those change how the ground is read.
+ * Vertical lift of the plate above the map surface (m). 0 = flush on the surface.
+ * Raise a hair (e.g. 0.05) only if the flat plate z-fights the basemap.
  */
-export const SKIRT_TOP_COLOR = '#8a7f6d'
-export const SKIRT_BASE_COLOR = '#3b352d'
+export const FOOTPRINT_LIFT_M = 0
