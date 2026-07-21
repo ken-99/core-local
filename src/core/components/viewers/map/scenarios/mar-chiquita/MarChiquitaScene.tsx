@@ -5,13 +5,14 @@ import type maplibregl from 'maplibre-gl'
 import type { CustomLayerInterface } from 'maplibre-gl'
 import { buildTerrainMesh } from './terrainMesh'
 import { buildWaterMesh } from './waterMesh'
-import { buildSkirtMesh } from './skirtMesh'
+import { buildFootprintMesh } from './footprintMesh'
 import { waterDepthRgba } from './waterShading'
-import { heightRampColor, hillshade, skirtColor } from './terrainShading'
+import { heightRampColor, hillshade } from './terrainShading'
 import gridJson from './marChiquitaGrid'
 import {
   EXAGGERATION, ORTHO_COORDINATES, HEIGHT_TINT_STRENGTH, ORTHO_IMAGE_URL, EDGE_TRIM_CELLS,
-  PEDESTAL_DEPTH_M,
+  FOOTPRINT_MARGIN_CELLS, FOOTPRINT_FILL_COLOR, FOOTPRINT_FILL_ALPHA,
+  FOOTPRINT_OUTLINE_COLOR, FOOTPRINT_LIFT_M,
 } from './constants'
 import { trimMaskEdges } from './edgeTrim'
 
@@ -23,8 +24,9 @@ interface SceneProps { map: maplibregl.Map; level: number; photo: boolean; hills
 
 /**
  * The whole Mar Chiquita scene as one MapLibre custom 3D layer: the drone DEM as
- * a ground mesh and the water as a second mesh, in one three.js scene sharing one
- * depth buffer — so higher ground correctly hides water behind it. Mercator only.
+ * a ground mesh, a flat footprint plate on the ground beneath it, and the water
+ * as a third mesh — one three.js scene sharing one depth buffer, so higher ground
+ * correctly hides water behind it. Mercator only.
  */
 export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hillshade: hillshadeOn, height }) => {
   const levelRef = React.useRef(level)
@@ -36,9 +38,9 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     if (!map) return
     let disposed = false
 
-    // Everything drawn — ground, water, and later the pedestal walls — uses this
-    // one trimmed mask, so the three can never disagree about where the survey
-    // ends. Trimming only the ground would let water spill past its edge.
+    // Both ground and water use this one trimmed mask, so the two can never
+    // disagree about where the survey ends. Trimming only the ground would let
+    // water spill past its edge.
     const drawGrid = {
       ...grid,
       cellInMask: trimMaskEdges(grid.cellInMask, grid.cols - 1, grid.rows - 1, EDGE_TRIM_CELLS),
@@ -133,29 +135,29 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
     })
     scene.add(new THREE.Mesh(terrainGeom, terrainMat))
 
-    // Pedestal: opaque walls from the survey edge down to a flat base, so the
-    // ground reads as a solid slab rather than a sheet ending in mid-air. Built
-    // from the same trimmed mask as the ground, so the two always line up.
-    // The base is left open — you would only see it from below the horizon, and
-    // the ground is drawn double-sided, so it still reads as solid from there.
-    const skirt = buildSkirtMesh(drawGrid, {
-      exaggeration: EXAGGERATION,
-      depthBelowLowest: PEDESTAL_DEPTH_M,
+    // Footprint plate: a flat semi-transparent "site-plan" plate on the ground
+    // under the relief, plus a boundary outline, so the terrain reads as elevated
+    // massing on its surveyed plot. Built from the same trimmed mask, grown outward
+    // so a rim shows past the relief's ground-level base. Lifted a hair above y=0
+    // to avoid z-fighting the flat basemap. Fixed styling — ignores the toggles.
+    const footprint = buildFootprintMesh(drawGrid, FOOTPRINT_MARGIN_CELLS)
+
+    const footprintFillGeom = new THREE.BufferGeometry()
+    footprintFillGeom.setAttribute('position', new THREE.Float32BufferAttribute(footprint.fill, 3))
+    const footprintFillMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(FOOTPRINT_FILL_COLOR), transparent: true, opacity: FOOTPRINT_FILL_ALPHA,
+      side: THREE.DoubleSide, depthWrite: false, depthTest: true,
     })
-    const skirtGeom = new THREE.BufferGeometry()
-    skirtGeom.setAttribute('position', new THREE.Float32BufferAttribute(skirt.positions, 3))
-    const skirtColors = new Float32Array(skirt.t.length * 3)
-    const _sc = new THREE.Color()
-    for (let i = 0; i < skirt.t.length; i++) {
-      const [r, g, b] = skirtColor(skirt.t[i])
-      _sc.setRGB(r, g, b, THREE.SRGBColorSpace) // ramp is sRGB
-      skirtColors[i * 3] = _sc.r; skirtColors[i * 3 + 1] = _sc.g; skirtColors[i * 3 + 2] = _sc.b
-    }
-    skirtGeom.setAttribute('color', new THREE.Float32BufferAttribute(skirtColors, 3))
-    const skirtMat = new THREE.MeshBasicMaterial({
-      vertexColors: true, side: THREE.DoubleSide, depthWrite: true, depthTest: true,
-    })
-    scene.add(new THREE.Mesh(skirtGeom, skirtMat))
+    const footprintFill = new THREE.Mesh(footprintFillGeom, footprintFillMat)
+    footprintFill.position.y = FOOTPRINT_LIFT_M
+    scene.add(footprintFill)
+
+    const footprintLineGeom = new THREE.BufferGeometry()
+    footprintLineGeom.setAttribute('position', new THREE.Float32BufferAttribute(footprint.outline, 3))
+    const footprintLineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(FOOTPRINT_OUTLINE_COLOR) })
+    const footprintLine = new THREE.LineSegments(footprintLineGeom, footprintLineMat)
+    footprintLine.position.y = FOOTPRINT_LIFT_M
+    scene.add(footprintLine)
 
     // Water: translucent, tests depth but does not write it, lifted to the level.
     const waterGeom = new THREE.BufferGeometry()
@@ -230,7 +232,8 @@ export const MarChiquitaScene: React.FC<SceneProps> = ({ map, level, photo, hill
       disposed = true
       if (map.getLayer(SCENE_LAYER_ID)) map.removeLayer(SCENE_LAYER_ID)
       terrainGeom.dispose(); terrainMat.dispose(); photoTex.dispose()
-      skirtGeom.dispose(); skirtMat.dispose()
+      footprintFillGeom.dispose(); footprintFillMat.dispose()
+      footprintLineGeom.dispose(); footprintLineMat.dispose()
       waterGeom.dispose(); waterMat.dispose(); renderer.dispose()
     }
   }, [map])

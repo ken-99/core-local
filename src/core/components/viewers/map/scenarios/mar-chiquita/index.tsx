@@ -84,15 +84,20 @@ export const MarChiquitaDemo: React.FC = () => {
     try { map.setTerrain(null) } catch { /* style tearing down */ }
   }, [map, shown, terrainLevel, dispatch])
 
-  // Fly to the scene at a tilt on show, so the relief reads immediately.
+  // Fly to the scene at a tilt on show. Fire immediately and unconditionally.
+  //
+  // The map is already mounted by the time the demo is turned on, and flyTo is a
+  // camera op that works before the style has finished — so there is nothing to
+  // wait for. Waiting was the bug: 'load' fires exactly once in the map's life
+  // (miss it and the camera never moves), and 'idle' can stall for seconds behind
+  // tile loading. Flying right away also points MapLibre at the demo-site tiles
+  // first, instead of loading the default view's tiles and only then moving.
   React.useEffect(() => {
     if (!map || !shown) return
-    const fly = () => map.flyTo({
+    map.flyTo({
       center: MAR_CHIQUITA_VIEW.center, zoom: MAR_CHIQUITA_VIEW.zoom,
       pitch: SCENE_PITCH, duration: 1500,
     })
-    map.isStyleLoaded() ? fly() : map.once('load', fly)
-    return () => { map.off('load', fly) }
   }, [map, shown])
 
   // Play: animate the level on a sine cycle between LEVEL_MIN and LEVEL_MAX.
