@@ -1,5 +1,5 @@
 import type { BakedGrid } from './bakeGrid'
-import { R_LAT, R_LNG } from './bakeGrid'
+import { R_LAT, R_LNG } from './constants'
 
 export interface TerrainMesh {
   positions: number[]

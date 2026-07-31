@@ -1,10 +1,8 @@
 import type { WaterGrid } from './waterMesh'
+import { R_LAT, R_LNG } from './constants'
 
 /** Baked grid = the mesh grid plus the WGS84 center it was localized around. */
 export type BakedGrid = WaterGrid & { center: [number, number] }
-
-export const R_LAT = 110_540
-export const R_LNG = 111_320
 
 /**
  * Parse GDAL `-of XYZ` text (one `lng lat elev` per line, row-major: top row =

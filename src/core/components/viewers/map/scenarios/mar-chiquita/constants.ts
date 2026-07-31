@@ -1,4 +1,21 @@
 /**
+ * Metres per degree of latitude / longitude at the equator, used to convert the
+ * DEM's WGS84 degrees into local metres and back again.
+ *
+ * These live here rather than in `bakeGrid.ts` on purpose. `bakeGrid.ts` also
+ * holds the offline runner that writes `marChiquitaGrid.ts`, and that runner
+ * imports node:fs / node:path / node:url. Importing anything from `bakeGrid.ts`
+ * as a *value* therefore pulls those Node-only modules into the browser bundle,
+ * and the production build fails with
+ *   UnhandledSchemeError: Reading from "node:fs" is not handled by plugins
+ * Keeping the constants in this Node-free module lets `terrainMesh.ts` use them
+ * without dragging the runner along. (`import type` is fine either way — types
+ * are erased at build time.)
+ */
+export const R_LAT = 110_540
+export const R_LNG = 111_320
+
+/**
  * Ortho drape — single georeferenced image (public/demo). JPEG, not PNG: the
  * terrain shader samples only .rgb, so the source alpha is unused, and a 2 MB
  * full-res JPEG replaces the 19 MB PNG with no visible loss — the PNG decode was
