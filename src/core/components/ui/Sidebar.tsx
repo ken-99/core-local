@@ -16,7 +16,6 @@ import { cn } from '../../utils/utils'
 import NavigationBar from '../TopNavigationBar'
 
 import { Button } from './Button'
-import { InfoSidebar } from './InfoSidebar'
 import { Input } from './Input'
 import { Separator } from './Separator'
 import {
@@ -33,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './Tooltip'
+import { ViewerSidebar } from './ViewerSidebar'
 
 // Menus context
 
@@ -116,8 +116,8 @@ const SidebarProvider = React.forwardRef<
     ref,
   ) => {
     const isMobile = useIsMobile()
-    const tInfo = useTranslations('InfoSidebar')
-    // User-resizable width for the InfoSidebar overlay (desktop only; persisted).
+    const tInfo = useTranslations('ViewerSidebar')
+    // User-resizable width for the ViewerSidebar overlay (desktop only; persisted).
     const {
       width: infoWidth,
       isResizing: infoResizing,
@@ -194,7 +194,7 @@ const SidebarProvider = React.forwardRef<
           toggleMenuSidebar()
         }
 
-        // Close InfoSidebar on Escape key
+        // Close the viewer sidebar on Escape key
         if (event.key === 'Escape' && openInfo) {
           event.preventDefault()
           setOpenInfo(false)
@@ -251,13 +251,18 @@ const SidebarProvider = React.forwardRef<
           >
             {children}
 
-            {/* InfoSidebar overlay */}
+            {/* ViewerSidebar overlay */}
 
             <div
               data-state={openInfo ? 'open' : 'closed'}
               aria-hidden={!openInfo}
               className={cn(
-                'fixed inset-y-0 z-40 w-full overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
+                // z-50, not z-40: several in-viewer panels (BIM properties menu, IDS legend) are
+                // fixed at z-50 and used to paint over this overlay's header, swallowing taps on
+                // the close button. This div is the last child of the wrapper, so at an equal
+                // z-index it wins on DOM order, while portalled Radix layers (dialogs, dropdowns,
+                // tooltips — also z-50, mounted on body) still stack above it.
+                'fixed inset-y-0 z-50 max-w-full overflow-hidden transition-[transform,opacity] duration-300 ease-in-out will-change-transform',
                 infoResizing && 'select-none',
                 openInfo
                   ? 'translate-x-0 opacity-100'
@@ -267,11 +272,12 @@ const SidebarProvider = React.forwardRef<
                 left: isMobile
                   ? '0'
                   : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
-                // Desktop: user-resizable width (persisted). Mobile: full-width.
-                width: isMobile ? '100%' : infoWidth,
+                // Desktop: user-resizable width (persisted).
+                // Mobile: same drawer width as the AppSidebar sheet, so both sidebars match.
+                width: isMobile ? SIDEBAR_WIDTH_MOBILE : infoWidth,
               }}
             >
-              <InfoSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
+              <ViewerSidebar minioBaseUrl={minioBaseUrl} martinBaseUrl={martinBaseUrl} organization={organization} pointcloudApiUrl={pointcloudApiUrl} />
 
               {/* Right-edge drag handle (desktop only). Drag to resize the sidebar width. */}
               {canResizeInfo && (
